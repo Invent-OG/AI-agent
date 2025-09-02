@@ -4,6 +4,12 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: { unoptimized: true },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals.push('postgres');
+    }
+    return config;
+  },
 };
 
 module.exports = nextConfig;
