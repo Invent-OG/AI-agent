@@ -11,7 +11,6 @@ import { FinalCTA } from '@/components/futuristic/final-cta'
 
 export default function WorkshopPage() {
 
-  console.log("")
   return (
     <div className="min-h-screen bg-gray-900">
       <FuturisticNavbar />
