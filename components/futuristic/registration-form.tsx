@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, CheckCircle, Sparkles } from 'lucide-react'
+import { Loader2, CheckCircle, Sparkles, Shield, Clock, Users } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 const registrationSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -28,8 +29,18 @@ export function RegistrationForm() {
   const { toast } = useToast()
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 })
   const formRef = useRef<HTMLDivElement>(null)
-  const fieldsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight })
+    }
+    
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
@@ -39,9 +50,9 @@ export function RegistrationForm() {
     if (typeof window === 'undefined') return
 
     const ctx = gsap.context(() => {
-      // Form fields entrance animation
+      // Modern form animation
       gsap.fromTo(".form-field",
-        { x: -50, opacity: 0 },
+        { x: -30, opacity: 0 },
         {
           x: 0,
           opacity: 1,
@@ -51,14 +62,13 @@ export function RegistrationForm() {
         }
       )
 
-      // Form card animation
       gsap.fromTo(formRef.current,
-        { scale: 0.9, opacity: 0 },
+        { scale: 0.95, opacity: 0 },
         {
           scale: 1,
           opacity: 1,
           duration: 0.8,
-          ease: "back.out(1.7)"
+          ease: "power3.out"
         }
       )
 
@@ -81,10 +91,8 @@ export function RegistrationForm() {
       setIsSubmitted(true)
       setShowConfetti(true)
       
-      // Confetti animation
       setTimeout(() => setShowConfetti(false), 5000)
       
-      // Success animation
       gsap.fromTo(".success-content",
         { scale: 0, opacity: 0 },
         {
@@ -95,7 +103,6 @@ export function RegistrationForm() {
         }
       )
 
-      // Redirect to payment
       setTimeout(() => {
         if (data.paymentUrl) {
           window.location.href = data.paymentUrl
@@ -103,7 +110,7 @@ export function RegistrationForm() {
       }, 2000)
 
       toast({
-        title: 'Registration Successful!',
+        title: 'Registration Successful! 🎉',
         description: 'Redirecting to secure payment...',
       })
     },
@@ -122,130 +129,191 @@ export function RegistrationForm() {
 
   if (isSubmitted) {
     return (
-      <>
-        {showConfetti && <Confetti />}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="success-content text-center p-12 glass-dark rounded-2xl border border-green-500/30 max-w-lg mx-auto"
-        >
-          <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 glow-effect">
-            <CheckCircle className="w-10 h-10 text-white" />
-          </div>
-          <h3 className="text-3xl font-bold text-white mb-4">
-            Registration Successful! 🎉
-          </h3>
-          <p className="text-gray-300 mb-6 text-lg">
-            Redirecting you to secure payment gateway...
-          </p>
-          <div className="flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-400 mr-2" />
-            <span className="text-blue-400">Processing...</span>
-          </div>
-        </motion.div>
-      </>
+      <section className="py-12 sm:py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-blue-950/30 dark:to-indigo-950/30">
+        {showConfetti && (
+          <Confetti
+            width={windowSize.width}
+            height={windowSize.height}
+            recycle={false}
+            numberOfPieces={200}
+          />
+        )}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="success-content text-center max-w-2xl mx-auto"
+          >
+            <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-2xl">
+              <CardContent className="p-8 sm:p-12">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                  <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+                </div>
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                  Registration Successful! 🎉
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg sm:text-xl">
+                  Redirecting you to secure payment gateway...
+                </p>
+                <div className="flex items-center justify-center space-x-3">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                  <span className="text-blue-600 dark:text-blue-400 font-medium">Processing payment...</span>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </section>
     )
   }
 
   return (
-    <section className="py-20 bg-gradient-to-b from-gray-900 to-gray-800 relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-purple-900/10 to-pink-900/10" />
+    <section className="py-12 sm:py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-blue-950/30 dark:to-indigo-950/30 relative">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-100/40 via-transparent to-purple-100/40 dark:from-blue-900/20 dark:to-purple-900/20" />
       
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-            Reserve Your Seat
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 dark:from-white dark:via-blue-200 dark:to-purple-200 bg-clip-text text-transparent">
+            Secure Your Seat Today
           </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Join the automation revolution - Limited seats available
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            Join the automation revolution - Transform your business in just 3 hours
           </p>
         </div>
 
-        <Card ref={formRef} className="max-w-lg mx-auto glass-dark border-gray-700/50 glow-effect">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center text-white flex items-center justify-center">
-              <Sparkles className="w-6 h-6 mr-2 text-blue-400" />
-              Workshop Registration
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div ref={fieldsRef} className="space-y-6">
-                <div className="form-field space-y-2">
-                  <Label htmlFor="name" className="text-gray-300">Full Name *</Label>
-                  <Input
-                    id="name"
-                    {...form.register('name')}
-                    placeholder="Enter your full name"
-                    className="bg-gray-800/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                  />
-                  {form.formState.errors.name && (
-                    <p className="text-sm text-red-400">{form.formState.errors.name.message}</p>
-                  )}
+        <div className="max-w-2xl mx-auto">
+          <Card ref={formRef} className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-2xl hover:shadow-3xl transition-all duration-500">
+            <CardHeader className="text-center pb-6 sm:pb-8">
+              <div className="flex justify-center mb-4">
+                <Badge className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700 text-sm sm:text-base">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Early Bird Special - 83% OFF
+                </Badge>
+              </div>
+              
+              <CardTitle className="text-2xl sm:text-3xl text-gray-900 dark:text-white flex items-center justify-center flex-wrap gap-2">
+                <Bot className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+                Workshop Registration
+              </CardTitle>
+              
+              <div className="flex items-center justify-center space-x-4 sm:space-x-6 mt-4 text-sm sm:text-base">
+                <div className="flex items-center text-green-600 dark:text-green-400">
+                  <Shield className="w-4 h-4 mr-2" />
+                  <span>Secure</span>
                 </div>
-
-                <div className="form-field space-y-2">
-                  <Label htmlFor="email" className="text-gray-300">Email Address *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    {...form.register('email')}
-                    placeholder="Enter your email address"
-                    className="bg-gray-800/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                  />
-                  {form.formState.errors.email && (
-                    <p className="text-sm text-red-400">{form.formState.errors.email.message}</p>
-                  )}
+                <div className="flex items-center text-blue-600 dark:text-blue-400">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span>Instant Access</span>
                 </div>
-
-                <div className="form-field space-y-2">
-                  <Label htmlFor="phone" className="text-gray-300">Phone Number *</Label>
-                  <Input
-                    id="phone"
-                    {...form.register('phone')}
-                    placeholder="Enter your phone number"
-                    className="bg-gray-800/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                  />
-                  {form.formState.errors.phone && (
-                    <p className="text-sm text-red-400">{form.formState.errors.phone.message}</p>
-                  )}
-                </div>
-
-                <div className="form-field space-y-2">
-                  <Label htmlFor="company" className="text-gray-300">Company Name</Label>
-                  <Input
-                    id="company"
-                    {...form.register('company')}
-                    placeholder="Your company name (optional)"
-                    className="bg-gray-800/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                  />
+                <div className="flex items-center text-purple-600 dark:text-purple-400">
+                  <Users className="w-4 h-4 mr-2" />
+                  <span>28 Seats Left</span>
                 </div>
               </div>
+            </CardHeader>
+            
+            <CardContent className="p-6 sm:p-8">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="form-field space-y-2">
+                    <Label htmlFor="name" className="text-gray-700 dark:text-gray-300 font-medium">
+                      Full Name *
+                    </Label>
+                    <Input
+                      id="name"
+                      {...form.register('name')}
+                      placeholder="Enter your full name"
+                      className="h-12 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+                    />
+                    {form.formState.errors.name && (
+                      <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
+                    )}
+                  </div>
 
-              <Button
-                type="submit"
-                className="w-full py-4 text-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 glow-effect"
-                disabled={submitRegistration.isPending}
-              >
-                {submitRegistration.isPending ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Processing Registration...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5 mr-2" />
-                    Register & Pay ₹499
-                  </>
-                )}
-              </Button>
+                  <div className="form-field space-y-2">
+                    <Label htmlFor="email" className="text-gray-700 dark:text-gray-300 font-medium">
+                      Email Address *
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      {...form.register('email')}
+                      placeholder="Enter your email"
+                      className="h-12 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+                    />
+                    {form.formState.errors.email && (
+                      <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
+                    )}
+                  </div>
+                </div>
 
-              <p className="text-xs text-center text-gray-400">
-                🔒 Secure payment via Cashfree • 💰 30-day money-back guarantee
-              </p>
-            </form>
-          </CardContent>
-        </Card>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="form-field space-y-2">
+                    <Label htmlFor="phone" className="text-gray-700 dark:text-gray-300 font-medium">
+                      Phone Number *
+                    </Label>
+                    <Input
+                      id="phone"
+                      {...form.register('phone')}
+                      placeholder="Enter your phone number"
+                      className="h-12 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+                    />
+                    {form.formState.errors.phone && (
+                      <p className="text-sm text-red-500">{form.formState.errors.phone.message}</p>
+                    )}
+                  </div>
+
+                  <div className="form-field space-y-2">
+                    <Label htmlFor="company" className="text-gray-700 dark:text-gray-300 font-medium">
+                      Company Name
+                    </Label>
+                    <Input
+                      id="company"
+                      {...form.register('company')}
+                      placeholder="Your company (optional)"
+                      className="h-12 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <Button
+                    type="submit"
+                    className="w-full h-14 text-lg sm:text-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-xl hover:shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 group"
+                    disabled={submitRegistration.isPending}
+                  >
+                    {submitRegistration.isPending ? (
+                      <>
+                        <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 mr-3 animate-spin" />
+                        Processing Registration...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 mr-3 group-hover:rotate-12 transition-transform" />
+                        Register & Pay ₹499
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 text-center">
+                  <div className="flex items-center justify-center text-green-600 dark:text-green-400 text-xs sm:text-sm">
+                    <Shield className="w-4 h-4 mr-2" />
+                    <span>Secure Payment</span>
+                  </div>
+                  <div className="flex items-center justify-center text-blue-600 dark:text-blue-400 text-xs sm:text-sm">
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    <span>Instant Access</span>
+                  </div>
+                  <div className="flex items-center justify-center text-purple-600 dark:text-purple-400 text-xs sm:text-sm">
+                    <Shield className="w-4 h-4 mr-2" />
+                    <span>Money-back Guarantee</span>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </section>
   )
