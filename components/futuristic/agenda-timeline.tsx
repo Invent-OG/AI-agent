@@ -6,6 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Calendar, Clock, IndianRupee, Users, Play, CheckCircle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger)
