@@ -245,10 +245,19 @@ export function FuturisticDashboard() {
               <Button variant="outline" size="sm" className="hidden sm:flex">
                 <Calendar className="w-4 h-4 mr-2" />
                 Today
-              </Button>
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
               <Button variant="outline" size="sm">
                 <Activity className="w-4 h-4 mr-2" />
                 Live
+              </Button>
+              
+              <Button 
+                onClick={() => window.location.href = '/admin/analytics'}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Analytics</span>
               </Button>
             </div>
           </div>
