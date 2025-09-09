@@ -2,14 +2,13 @@
 
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   User,
@@ -24,40 +23,24 @@ import {
   Download,
   Play,
   CheckCircle,
-  Star,
-  TrendingUp,
-  Target,
   Users,
-  FileText,
   Video,
   Bookmark,
   Share2,
-  Heart,
   ThumbsUp,
   MessageCircle,
-  Plus,
   Edit,
-  Trash2,
   Eye,
-  Lock,
-  Unlock,
   Zap,
-  Globe,
-  Mail,
-  Phone,
-  MapPin,
-  GraduationCap,
-  Trophy,
-  Certificate,
   BarChart3,
-  PieChart,
   Activity,
 } from "lucide-react";
+import { Label } from "../ui/label";
 
 export function StudentDashboard() {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
-  const [notifications, setNotifications] = useState([]);
+  const [localNotifications, setLocalNotifications] = useState([]);
   const queryClient = useQueryClient();
 
   // Fetch student data
@@ -143,7 +126,7 @@ export function StudentDashboard() {
 
   const student = studentData?.data;
   const progress = progressData?.data;
-  const notifications = notificationsData?.data || [];
+  const notificationsList = notificationsData?.data || [];
   const workshop = workshopData?.data;
 
   const getInitials = (name: string) => {
@@ -198,7 +181,7 @@ export function StudentDashboard() {
               >
                 <Bell className="w-4 h-4" />
                 Notifications (
-                {notifications.filter((n: any) => !n.isRead).length})
+                {notificationsList.filter((n: any) => !n.isRead).length})
               </Button>
               <Button
                 variant="outline"
@@ -397,39 +380,41 @@ export function StudentDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {notifications.slice(0, 5).map((notification: any) => (
-                          <div
-                            key={notification.id}
-                            className={`p-3 rounded-lg border-l-4 ${
-                              notification.isRead
-                                ? "bg-gray-50 dark:bg-gray-800/50 border-gray-300"
-                                : "bg-blue-50 dark:bg-blue-900/20 border-blue-500"
-                            }`}
-                            onClick={() =>
-                              !notification.isRead &&
-                              markNotificationRead.mutate(notification.id)
-                            }
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <p className="font-medium text-sm">
-                                  {notification.title}
-                                </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                  {notification.message}
-                                </p>
+                        {notificationsList
+                          .slice(0, 5)
+                          .map((notification: any) => (
+                            <div
+                              key={notification.id}
+                              className={`p-3 rounded-lg border-l-4 ${
+                                notification.isRead
+                                  ? "bg-gray-50 dark:bg-gray-800/50 border-gray-300"
+                                  : "bg-blue-50 dark:bg-blue-900/20 border-blue-500"
+                              }`}
+                              onClick={() =>
+                                !notification.isRead &&
+                                markNotificationRead.mutate(notification.id)
+                              }
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm">
+                                    {notification.title}
+                                  </p>
+                                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                    {notification.message}
+                                  </p>
+                                </div>
+                                {!notification.isRead && (
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                                )}
                               </div>
-                              {!notification.isRead && (
-                                <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
-                              )}
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                {new Date(
+                                  notification.createdAt
+                                ).toLocaleDateString()}
+                              </p>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                              {new Date(
-                                notification.createdAt
-                              ).toLocaleDateString()}
-                            </p>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     </CardContent>
                   </Card>
@@ -709,8 +694,8 @@ export function StudentDashboard() {
                             Successfully Registered!
                           </h3>
                           <p className="text-gray-600 dark:text-gray-400 mb-4">
-                            You're all set for the workshop. We'll send you a
-                            reminder before the event.
+                            You&apos;re all set for the workshop. We&apos;ll
+                            send you a reminder before the event.
                           </p>
                           <div className="space-y-2">
                             <Button className="w-full">
