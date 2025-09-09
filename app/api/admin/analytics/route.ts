@@ -1,12 +1,13 @@
-import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { leads, payments } from '@/lib/db/schema'
-import { sql, eq, gte } from 'drizzle-orm'
-import { subDays, format } from 'date-fns'
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { leads, payments } from "@/lib/db/schema";
+import { sql, eq, gte, and } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
+import { subDays, format } from "date-fns";
 
 export async function GET() {
   try {
-    const thirtyDaysAgo = subDays(new Date(), 30)
+    const thirtyDaysAgo = subDays(new Date(), 30);
 
     // Get signups by day
     const signupsData = await db
@@ -17,7 +18,7 @@ export async function GET() {
       .from(leads)
       .where(gte(leads.createdAt, thirtyDaysAgo))
       .groupBy(sql`date(created_at)`)
-      .orderBy(sql`date(created_at)`)
+      .orderBy(sql`date(created_at)`);
 
     // Get conversions by day
     const conversionsData = await db
@@ -26,30 +27,29 @@ export async function GET() {
         count: sql<number>`count(*)`,
       })
       .from(leads)
-      .where(eq(leads.status, 'paid'))
-      .where(gte(leads.createdAt, thirtyDaysAgo))
+      .where(and(eq(leads.status, "paid"), gte(leads.createdAt, thirtyDaysAgo)))
       .groupBy(sql`date(created_at)`)
-      .orderBy(sql`date(created_at)`)
+      .orderBy(sql`date(created_at)`);
 
     // Get revenue by day
+    const p = alias(payments, "p");
     const revenueData = await db
       .select({
-        date: sql<string>`date(p.created_at)`,
-        amount: sql<number>`sum(cast(p.amount as decimal))`,
+        date: sql<string>`date(${p.createdAt})`,
+        amount: sql<number>`sum(cast(${p.amount} as decimal))`,
       })
-      .from(payments.as('p'))
-      .where(eq(payments.status, 'success'))
-      .where(gte(payments.createdAt, thirtyDaysAgo))
-      .groupBy(sql`date(p.created_at)`)
-      .orderBy(sql`date(p.created_at)`)
+      .from(p)
+      .where(and(eq(p.status, "success"), gte(p.createdAt, thirtyDaysAgo)))
+      .groupBy(sql`date(${p.createdAt})`)
+      .orderBy(sql`date(${p.createdAt})`);
 
     // Format data for charts
-    const formatData = (data: any[], dateField: string = 'date') => {
-      return data.map(item => ({
+    const formatData = (data: any[], dateField: string = "date") => {
+      return data.map((item) => ({
         ...item,
-        [dateField]: format(new Date(item[dateField]), 'MMM dd'),
-      }))
-    }
+        [dateField]: format(new Date(item[dateField]), "MMM dd"),
+      }));
+    };
 
     return NextResponse.json({
       success: true,
@@ -58,12 +58,12 @@ export async function GET() {
         conversions: formatData(conversionsData),
         revenue: formatData(revenueData),
       },
-    })
+    });
   } catch (error) {
-    console.error('Error fetching analytics:', error)
+    console.error("Error fetching analytics:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch analytics' },
+      { success: false, error: "Failed to fetch analytics" },
       { status: 500 }
-    )
+    );
   }
 }

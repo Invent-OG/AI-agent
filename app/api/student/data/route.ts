@@ -6,6 +6,8 @@ import {
   studentProgress,
   courseModules,
   certificates,
+  forumPosts,
+  forumReplies,
 } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
@@ -71,13 +73,13 @@ export async function GET(request: NextRequest) {
     ];
 
     // Get forum posts
-    const forumPosts = await db
+    const studentForumPosts = await db
       .select()
       .from(forumPosts)
       .where(eq(forumPosts.leadId, leadId));
 
     // Get forum replies
-    const forumReplies = await db
+    const studentForumReplies = await db
       .select()
       .from(forumReplies)
       .where(eq(forumReplies.leadId, leadId));
@@ -87,8 +89,8 @@ export async function GET(request: NextRequest) {
       payment: payment[0] || null,
       certificates: studentCertificates,
       recentActivity,
-      forumPosts,
-      forumReplies,
+      forumPosts: studentForumPosts,
+      forumReplies: studentForumReplies,
       workshopStatus:
         payment[0]?.plan === "workshop" ? "registered" : "not_registered",
     };

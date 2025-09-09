@@ -33,18 +33,20 @@ export async function GET(request: NextRequest) {
       0
     );
 
-    // Format modules data
-    const modules = progressData.map((item) => ({
-      id: item.module.id,
-      title: item.module.title,
-      description: item.module.description,
-      duration: item.module.duration,
-      videoUrl: item.module.videoUrl,
-      isCompleted: item.progress.isCompleted,
-      completedAt: item.progress.completedAt,
-      watchTime: item.progress.watchTime,
-      courseName: item.course?.title,
-    }));
+    // Format modules data, filter out null modules
+    const modules = progressData
+      .filter((item) => item.module !== null)
+      .map((item) => ({
+        id: item.module!.id,
+        title: item.module!.title,
+        description: item.module!.description,
+        duration: item.module!.duration,
+        videoUrl: item.module!.videoUrl,
+        isCompleted: item.progress.isCompleted,
+        completedAt: item.progress.completedAt,
+        watchTime: item.progress.watchTime,
+        courseName: item.course?.title,
+      }));
 
     const progress = {
       modules,

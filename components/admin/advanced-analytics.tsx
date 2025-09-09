@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { motion } from 'framer-motion'
-import { useQuery } from '@tanstack/react-query'
+import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import {
   PieChart,
   Pie,
@@ -16,28 +16,38 @@ import {
   FunnelChart,
   Funnel,
   LabelList,
-} from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Globe, TrendingUp, Users, DollarSign } from 'lucide-react'
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Globe, TrendingUp, Users, DollarSign } from "lucide-react";
 
-const COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6B7280']
+const COLORS = [
+  "#3B82F6",
+  "#8B5CF6",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#6B7280",
+];
 
 export function AdvancedAnalytics() {
   const { data: analyticsData, isLoading } = useQuery({
-    queryKey: ['advanced-analytics'],
+    queryKey: ["advanced-analytics"],
     queryFn: async () => {
-      const response = await fetch('/api/analytics/dashboard')
-      if (!response.ok) throw new Error('Failed to fetch analytics')
-      return response.json()
+      const response = await fetch("/api/analytics/dashboard");
+      if (!response.ok) throw new Error("Failed to fetch analytics");
+      return response.json();
     },
-  })
+  });
 
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
+          <Card
+            key={i}
+            className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg"
+          >
             <CardContent className="p-6">
               <div className="animate-pulse space-y-4">
                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
@@ -47,10 +57,10 @@ export function AdvancedAnalytics() {
           </Card>
         ))}
       </div>
-    )
+    );
   }
 
-  const data = analyticsData?.data || {}
+  const data = analyticsData?.data || {};
 
   return (
     <motion.div
@@ -108,14 +118,21 @@ export function AdvancedAnalytics() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) =>
+                        `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
+                      }
                       outerRadius={120}
                       fill="#8884d8"
                       dataKey="count"
                     >
-                      {(data.trafficSources || []).map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
+                      {(data.trafficSources || []).map(
+                        (entry: any, index: number) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        )
+                      )}
                     </Pie>
                     <Tooltip />
                   </PieChart>
@@ -164,7 +181,7 @@ export function AdvancedAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="plan" />
                     <YAxis />
-                    <Tooltip formatter={(value) => [`₹${value}`, 'Revenue']} />
+                    <Tooltip formatter={(value) => [`₹${value}`, "Revenue"]} />
                     <Bar dataKey="revenue" fill="#F59E0B" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -174,5 +191,5 @@ export function AdvancedAnalytics() {
         </TabsContent>
       </Tabs>
     </motion.div>
-  )
+  );
 }
