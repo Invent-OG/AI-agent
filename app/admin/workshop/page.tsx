@@ -1,7 +1,12 @@
-'use client'
+"use client";
 
-import { FuturisticDashboard } from '@/components/admin/futuristic-dashboard'
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { FuturisticDashboard } from "@/components/admin/futuristic-dashboard";
 
 export default function WorkshopAdminPage() {
-  return <FuturisticDashboard />
+  return (
+    <ProtectedRoute requiredRole="admin">
+      <FuturisticDashboard />
+    </ProtectedRoute>
+  );
 }

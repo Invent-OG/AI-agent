@@ -1,67 +1,37 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { notifications } from '@/lib/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { notifications } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
+    const { searchParams } = new URL(request.url);
+    const leadId = searchParams.get("leadId");
 
-    if (!userId) {
+    if (!leadId) {
       return NextResponse.json(
-        { success: false, error: 'User ID required' },
+        { success: false, error: "Lead ID is required" },
         { status: 400 }
-      )
+      );
     }
 
-    const userNotifications = await db
+    // Get notifications for the student
+    const studentNotifications = await db
       .select()
       .from(notifications)
-      .where(eq(notifications.userId, userId))
+      .where(eq(notifications.userId, leadId))
       .orderBy(desc(notifications.createdAt))
-      .limit(50)
+      .limit(20);
 
     return NextResponse.json({
       success: true,
-      notifications: userNotifications,
-    })
+      data: studentNotifications,
+    });
   } catch (error) {
-    console.error('Error fetching notifications:', error)
+    console.error("Student notifications fetch error:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch notifications' },
+      { success: false, error: "Internal server error" },
       { status: 500 }
-    )
-  }
-}
-
-export async function PATCH(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const body = await request.json()
-    const { markAllRead } = body
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'User ID required' },
-        { status: 400 }
-      )
-    }
-
-    if (markAllRead) {
-      await db
-        .update(notifications)
-        .set({ isRead: true })
-        .where(eq(notifications.userId, userId))
-    }
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error updating notifications:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to update notifications' },
-      { status: 500 }
-    )
+    );
   }
 }

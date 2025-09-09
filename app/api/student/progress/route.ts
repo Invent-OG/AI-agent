@@ -1,61 +1,67 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { studentProgress, courseModules, courses, certificates } from '@/lib/db/schema'
-import { eq, sql } from 'drizzle-orm'
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { studentProgress, courseModules, courses } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
+    const { searchParams } = new URL(request.url);
+    const leadId = searchParams.get("leadId");
 
-    if (!userId) {
+    if (!leadId) {
       return NextResponse.json(
-        { success: false, error: 'User ID required' },
+        { success: false, error: "Lead ID is required" },
         { status: 400 }
-      )
+      );
     }
 
-    // Get overall progress
-    const progressResult = await db
+    // Get student progress with module details
+    const progressData = await db
       .select({
-        totalModules: sql<number>`count(*)`,
-        completedModules: sql<number>`count(case when ${studentProgress.isCompleted} then 1 end)`,
-        totalWatchTime: sql<number>`sum(${studentProgress.watchTime})`,
+        progress: studentProgress,
+        module: courseModules,
+        course: courses,
       })
-      .from(courseModules)
-      .leftJoin(studentProgress, eq(studentProgress.moduleId, courseModules.id))
-      .where(eq(studentProgress.leadId, userId))
+      .from(studentProgress)
+      .leftJoin(courseModules, eq(studentProgress.moduleId, courseModules.id))
+      .leftJoin(courses, eq(courseModules.courseId, courses.id))
+      .where(eq(studentProgress.leadId, leadId));
 
-    const progress = progressResult[0]
-    const overallProgress = progress?.totalModules > 0 
-      ? Math.round((progress.completedModules / progress.totalModules) * 100)
-      : 0
+    // Calculate total watch time
+    const totalWatchTime = progressData.reduce(
+      (sum, item) => sum + (item.progress.watchTime || 0),
+      0
+    );
 
-    // Get certificates
-    const userCertificates = await db
-      .select()
-      .from(certificates)
-      .where(eq(certificates.leadId, userId))
+    // Format modules data
+    const modules = progressData.map((item) => ({
+      id: item.module.id,
+      title: item.module.title,
+      description: item.module.description,
+      duration: item.module.duration,
+      videoUrl: item.module.videoUrl,
+      isCompleted: item.progress.isCompleted,
+      completedAt: item.progress.completedAt,
+      watchTime: item.progress.watchTime,
+      courseName: item.course?.title,
+    }));
 
-    // Mock recent activity
-    const recentActivity = [
-      { title: 'Completed Zapier Basics', date: '2 days ago' },
-      { title: 'Started n8n Training', date: '1 week ago' },
-      { title: 'Earned Automation Certificate', date: '2 weeks ago' },
-    ]
+    const progress = {
+      modules,
+      totalWatchTime,
+      completedModules: modules.filter((m) => m.isCompleted).length,
+      totalModules: modules.length,
+    };
 
     return NextResponse.json({
       success: true,
-      progress: overallProgress,
-      totalWatchTime: progress?.totalWatchTime || 0,
-      certificates: userCertificates,
-      recentActivity,
-    })
+      data: progress,
+    });
   } catch (error) {
-    console.error('Error fetching student progress:', error)
+    console.error("Student progress fetch error:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch progress' },
+      { success: false, error: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }

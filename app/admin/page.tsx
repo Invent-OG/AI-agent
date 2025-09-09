@@ -1,5 +1,12 @@
-import { redirect } from 'next/navigation'
+"use client";
+
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { FuturisticDashboard } from "@/components/admin/futuristic-dashboard";
+
 export default function AdminPage() {
-  // Redirect to workshop admin by default
-  redirect('/admin/workshop')
+  return (
+    <ProtectedRoute requiredRole="admin">
+      <FuturisticDashboard />
+    </ProtectedRoute>
+  );
 }
