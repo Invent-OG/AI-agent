@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
+import { gsap } from 'gsap'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,14 +28,17 @@ import {
   Calendar,
   Target
 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
+import Link from 'next/link'
 
 export default function StudentDashboard() {
   const { toast } = useToast()
   const router = useRouter()
+  const pathname = usePathname()
   const [user, setUser] = useState<any>(null)
+  const dashboardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const getUser = async () => {
@@ -48,6 +52,25 @@ export default function StudentDashboard() {
 
     getUser()
   }, [router])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(".dashboard-card",
+        { y: 30, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.6,
+          ease: "power3.out",
+          stagger: 0.1
+        }
+      )
+    }, dashboardRef)
+
+    return () => ctx.revert()
+  }, [user])
 
   const { data: progressData } = useQuery({
     queryKey: ['student-progress', user?.id],
@@ -77,6 +100,15 @@ export default function StudentDashboard() {
       return response.json()
     },
     enabled: !!user?.id,
+  })
+
+  const { data: workshopData } = useQuery({
+    queryKey: ['workshop-details'],
+    queryFn: async () => {
+      const response = await fetch('/api/workshop/details')
+      if (!response.ok) throw new Error('Failed to fetch workshop details')
+      return response.json()
+    },
   })
 
   const { data: notificationsData } = useQuery({
@@ -112,11 +144,12 @@ export default function StudentDashboard() {
   const progress = progressData?.progress || 0
   const courses = coursesData?.courses || []
   const certificates = certificatesData?.certificates || []
+  const workshop = workshopData?.data
   const notifications = notificationsData?.notifications || []
   const unreadCount = notifications.filter((n: any) => !n.isRead).length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-blue-950/30 dark:to-indigo-950/30">
+    <div ref={dashboardRef} className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-blue-950/30 dark:to-indigo-950/30">
       {/* Modern Header */}
       <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
@@ -135,14 +168,22 @@ export default function StudentDashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="w-5 h-5" />
-                {unreadCount > 0 && (
-                  <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500">
-                    {unreadCount}
-                  </Badge>
-                )}
-              </Button>
+              <Link href="/student/notifications">
+                <Button variant="ghost" size="sm" className="relative">
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500">
+                      {unreadCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+              <Link href="/student/settings">
+                <Button variant="outline" size="sm">
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </Button>
+              </Link>
               <Button variant="outline" onClick={handleLogout} size="sm">
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -157,22 +198,15 @@ export default function StudentDashboard() {
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-800/50">
             <TabsTrigger value="overview" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Overview</TabsTrigger>
             <TabsTrigger value="courses" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Courses</TabsTrigger>
-            <TabsTrigger value="community" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Community</TabsTrigger>
+            <TabsTrigger value="workshop" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Workshop</TabsTrigger>
             <TabsTrigger value="certificates" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Certificates</TabsTrigger>
-            <TabsTrigger value="notifications" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
-              Notifications
-              {unreadCount > 0 && (
-                <Badge className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500">
-                  {unreadCount}
-                </Badge>
-              )}
-            </TabsTrigger>
+            <TabsTrigger value="community" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Community</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
             {/* Enhanced Progress Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <Card className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center">
                     <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
@@ -192,7 +226,7 @@ export default function StudentDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <Card className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center">
                     <Clock className="w-5 h-5 mr-2 text-green-600" />
@@ -209,7 +243,7 @@ export default function StudentDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <Card className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center">
                     <Award className="w-5 h-5 mr-2 text-purple-600" />
@@ -226,7 +260,7 @@ export default function StudentDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <Card className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center">
                     <Target className="w-5 h-5 mr-2 text-orange-600" />
@@ -244,9 +278,46 @@ export default function StudentDashboard() {
               </Card>
             </div>
 
-            {/* Recent Activity & Quick Actions */}
+            {/* Quick Actions & Recent Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
+              <Card className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Target className="w-5 h-5 mr-2 text-purple-600" />
+                    Quick Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Link href="/student/courses">
+                      <Button className="h-20 w-full flex-col bg-gradient-to-br from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600">
+                        <Video className="w-6 h-6 mb-2" />
+                        <span className="text-sm">Continue Learning</span>
+                      </Button>
+                    </Link>
+                    <Link href="/student/community">
+                      <Button variant="outline" className="h-20 w-full flex-col hover:bg-purple-50 dark:hover:bg-purple-950/30">
+                        <MessageSquare className="w-6 h-6 mb-2" />
+                        <span className="text-sm">Ask Question</span>
+                      </Button>
+                    </Link>
+                    <Link href="/student/certificates">
+                      <Button variant="outline" className="h-20 w-full flex-col hover:bg-green-50 dark:hover:bg-green-950/30">
+                        <Award className="w-6 h-6 mb-2" />
+                        <span className="text-sm">View Certificates</span>
+                      </Button>
+                    </Link>
+                    <Link href="/student/resources">
+                      <Button variant="outline" className="h-20 w-full flex-col hover:bg-orange-50 dark:hover:bg-orange-950/30">
+                        <FileText className="w-6 h-6 mb-2" />
+                        <span className="text-sm">Resources</span>
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Calendar className="w-5 h-5 mr-2 text-blue-600" />
@@ -280,42 +351,13 @@ export default function StudentDashboard() {
                   </div>
                 </CardContent>
               </Card>
-
-              <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Target className="w-5 h-5 mr-2 text-purple-600" />
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button className="h-20 flex-col bg-gradient-to-br from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600">
-                      <Video className="w-6 h-6 mb-2" />
-                      <span className="text-sm">Continue Learning</span>
-                    </Button>
-                    <Button variant="outline" className="h-20 flex-col hover:bg-purple-50 dark:hover:bg-purple-950/30">
-                      <MessageSquare className="w-6 h-6 mb-2" />
-                      <span className="text-sm">Ask Question</span>
-                    </Button>
-                    <Button variant="outline" className="h-20 flex-col hover:bg-green-50 dark:hover:bg-green-950/30">
-                      <Award className="w-6 h-6 mb-2" />
-                      <span className="text-sm">View Certificates</span>
-                    </Button>
-                    <Button variant="outline" className="h-20 flex-col hover:bg-orange-50 dark:hover:bg-orange-950/30">
-                      <FileText className="w-6 h-6 mb-2" />
-                      <span className="text-sm">Resources</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
 
           <TabsContent value="courses" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {courses.map((course: any) => (
-                <Card key={course.id} className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
+                <Card key={course.id} className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
@@ -341,10 +383,12 @@ export default function StudentDashboard() {
                         <div className="text-sm text-gray-600 dark:text-gray-400">
                           <span className="font-medium">{course.completedModules || 0}</span> / {course.totalModules || 0} modules
                         </div>
-                        <Button size="sm" className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
-                          <PlayCircle className="w-4 h-4 mr-2" />
-                          Continue
-                        </Button>
+                        <Link href="/student/courses">
+                          <Button size="sm" className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+                            <PlayCircle className="w-4 h-4 mr-2" />
+                            Continue
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   </CardContent>
@@ -352,7 +396,7 @@ export default function StudentDashboard() {
               ))}
               
               {courses.length === 0 && (
-                <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg col-span-full">
+                <Card className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg col-span-full">
                   <CardContent className="text-center py-12">
                     <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -370,18 +414,181 @@ export default function StudentDashboard() {
             </div>
           </TabsContent>
 
+          <TabsContent value="workshop" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Calendar className="w-5 h-5 mr-2 text-purple-600" />
+                    Workshop Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {workshop ? (
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                          {workshop.title}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {workshop.description}
+                        </p>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Date</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{workshop.date}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Time</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{workshop.time}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Duration</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{workshop.duration}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Price</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">₹{workshop.price}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Loading workshop details...
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Users className="w-5 h-5 mr-2 text-green-600" />
+                    Registration Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {user?.workshopStatus === "registered" || user?.status === "paid" ? (
+                      <div className="text-center">
+                        <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+                        <h3 className="text-lg font-bold text-green-600 mb-2">
+                          Successfully Registered!
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 mb-4">
+                          You're all set for the workshop. We'll send you a reminder before the event.
+                        </p>
+                        <div className="space-y-2">
+                          <Link href="/student/workshop">
+                            <Button className="w-full">
+                              <Video className="w-4 h-4 mr-2" />
+                              View Workshop Details
+                            </Button>
+                          </Link>
+                          <Button variant="outline" className="w-full">
+                            <Download className="w-4 h-4 mr-2" />
+                            Download Materials
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <Calendar className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                          Register for Workshop
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 mb-4">
+                          Join our live automation workshop and learn from industry experts.
+                        </p>
+                        <Link href="/student/workshop">
+                          <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                            Register Now - ₹499
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="certificates" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {certificates.map((certificate: any) => (
+                <Card key={certificate.id} className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center">
+                        <Award className="w-5 h-5 mr-2 text-yellow-600" />
+                        {certificate.courseName}
+                      </CardTitle>
+                      <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+                        Verified
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Certificate #{certificate.certificateNumber}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Issued on {format(new Date(certificate.issuedAt), 'MMMM dd, yyyy')}
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Certificate
+                      </Button>
+                      <Button variant="outline" className="w-full">
+                        <Star className="w-4 h-4 mr-2" />
+                        Share on LinkedIn
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {certificates.length === 0 && (
+                <Card className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg col-span-full">
+                  <CardContent className="text-center py-12">
+                    <Award className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      No certificates yet
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">
+                      Complete courses to earn certificates
+                    </p>
+                    <Link href="/student/courses">
+                      <Button className="bg-gradient-to-r from-blue-500 to-purple-500">
+                        Browse Courses
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
           <TabsContent value="community" className="space-y-6">
-            <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
+            <Card className="dashboard-card border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center">
                     <MessageSquare className="w-5 h-5 mr-2 text-blue-600" />
                     Community Forum
                   </CardTitle>
-                  <Button className="bg-gradient-to-r from-blue-500 to-purple-500">
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    New Post
-                  </Button>
+                  <Link href="/student/community">
+                    <Button className="bg-gradient-to-r from-blue-500 to-purple-500">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Visit Forum
+                    </Button>
+                  </Link>
                 </div>
               </CardHeader>
               <CardContent>
@@ -445,120 +652,6 @@ export default function StudentDashboard() {
                       ))}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="certificates" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {certificates.map((certificate: any) => (
-                <Card key={certificate.id} className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center">
-                        <Award className="w-5 h-5 mr-2 text-yellow-600" />
-                        {certificate.courseName}
-                      </CardTitle>
-                      <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
-                        Verified
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Certificate #{certificate.certificateNumber}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Issued on {format(new Date(certificate.issuedAt), 'MMMM dd, yyyy')}
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
-                        <Download className="w-4 h-4 mr-2" />
-                        Download Certificate
-                      </Button>
-                      <Button variant="outline" className="w-full">
-                        <Star className="w-4 h-4 mr-2" />
-                        Share on LinkedIn
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              
-              {certificates.length === 0 && (
-                <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg col-span-full">
-                  <CardContent className="text-center py-12">
-                    <Award className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      No certificates yet
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
-                      Complete courses to earn certificates
-                    </p>
-                    <Button className="bg-gradient-to-r from-blue-500 to-purple-500">
-                      Browse Courses
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="notifications" className="space-y-6">
-            <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center">
-                    <Bell className="w-5 h-5 mr-2 text-blue-600" />
-                    Notifications
-                  </CardTitle>
-                  <Button variant="outline" size="sm">
-                    Mark All Read
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {notifications.map((notification: any) => (
-                    <div 
-                      key={notification.id} 
-                      className={`p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
-                        notification.isRead 
-                          ? 'bg-gray-50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700' 
-                          : 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-700'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 dark:text-white mb-1">
-                            {notification.title}
-                          </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            {notification.message}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {format(new Date(notification.createdAt), 'MMM dd, yyyy HH:mm')}
-                          </p>
-                        </div>
-                        {!notification.isRead && (
-                          <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {notifications.length === 0 && (
-                    <div className="text-center py-12">
-                      <Bell className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                        No notifications
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        You're all caught up! Check back later for updates.
-                      </p>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
