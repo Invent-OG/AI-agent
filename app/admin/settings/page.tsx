@@ -2,13 +2,13 @@
 
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
-import { AdminDashboard } from "@/components/admin/admin-dashboard";
+import { AdminSettings } from "@/components/admin/admin-settings";
 
-export default function AdminPage() {
+export default function AdminSettingsPage() {
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminSidebar>
-        <AdminDashboard />
+        <AdminSettings />
       </AdminSidebar>
     </ProtectedRoute>
   );
