@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { leads, payments } from "@/lib/db/schema";
-import { sql, eq, gte } from "drizzle-orm";
-import { subDays, subMonths, format } from "date-fns";
+import { sql, gte } from "drizzle-orm";
+import { subDays, format } from "date-fns";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const range = searchParams.get("range") || "30d";
-    const type = searchParams.get("type") || "overview";
 
+    // Determine start date
     let startDate: Date;
     switch (range) {
       case "7d":
@@ -25,49 +25,48 @@ export async function GET(request: NextRequest) {
         startDate = subDays(new Date(), 30);
     }
 
-    // Get total revenue
+    // Convert to ISO string only for raw SQL queries
+    const startDateISO = startDate.toISOString();
+
+    // Total revenue (raw SQL because of sum cast)
     const [{ totalRevenue }] = await db
       .select({ totalRevenue: sql<number>`sum(cast(amount as decimal))` })
       .from(payments)
-      .where(
-        sql`status = 'success' AND created_at >= ${startDate}`
-      );
+      .where(sql`status = 'success' AND created_at >= ${startDateISO}`);
 
-    // Get new leads
+    // New leads (use gte with Date object)
     const [{ newLeads }] = await db
       .select({ newLeads: sql<number>`count(*)` })
       .from(leads)
       .where(gte(leads.createdAt, startDate));
 
-    // Get conversion rate
+    // Total leads for conversion
     const [{ totalLeads }] = await db
       .select({ totalLeads: sql<number>`count(*)` })
       .from(leads)
       .where(gte(leads.createdAt, startDate));
 
+    // Paid leads (raw SQL)
     const [{ paidLeads }] = await db
       .select({ paidLeads: sql<number>`count(*)` })
       .from(leads)
-      .where(
-        sql`status = 'paid' AND created_at >= ${startDate}`
-      );
+      .where(sql`status = 'paid' AND created_at >= ${startDateISO}`);
 
-    const conversionRate = totalLeads > 0 ? Math.round((paidLeads / totalLeads) * 100) : 0;
+    const conversionRate =
+      totalLeads > 0 ? Math.round((paidLeads / totalLeads) * 100) : 0;
 
-    // Get revenue data by date
+    // Revenue data by date
     const revenueData = await db
       .select({
         date: sql<string>`date(created_at)`,
         amount: sql<number>`sum(cast(amount as decimal))`,
       })
       .from(payments)
-      .where(
-        sql`status = 'success' AND created_at >= ${startDate}`
-      )
+      .where(sql`status = 'success' AND created_at >= ${startDateISO}`)
       .groupBy(sql`date(created_at)`)
       .orderBy(sql`date(created_at)`);
 
-    // Get leads data by date
+    // Leads data by date
     const leadsData = await db
       .select({
         date: sql<string>`date(created_at)`,
@@ -78,7 +77,7 @@ export async function GET(request: NextRequest) {
       .groupBy(sql`date(created_at)`)
       .orderBy(sql`date(created_at)`);
 
-    // Get revenue by plan
+    // Revenue by plan
     const revenueByPlan = await db
       .select({
         plan: payments.plan,
@@ -86,12 +85,10 @@ export async function GET(request: NextRequest) {
         count: sql<number>`count(*)`,
       })
       .from(payments)
-      .where(
-        sql`status = 'success' AND created_at >= ${startDate}`
-      )
+      .where(sql`status = 'success' AND created_at >= ${startDateISO}`)
       .groupBy(payments.plan);
 
-    // Get lead sources
+    // Lead sources
     const leadSources = await db
       .select({
         source: leads.source,
@@ -101,11 +98,15 @@ export async function GET(request: NextRequest) {
       .where(gte(leads.createdAt, startDate))
       .groupBy(leads.source);
 
-    // Mock conversion funnel data
+    // Mock conversion funnel
     const conversionFunnel = [
       { name: "Visitors", count: totalLeads * 3, percentage: 100 },
       { name: "Leads", count: totalLeads, percentage: 33 },
-      { name: "Registered", count: Math.floor(totalLeads * 0.6), percentage: 20 },
+      {
+        name: "Registered",
+        count: Math.floor(totalLeads * 0.6),
+        percentage: 20,
+      },
       { name: "Paid", count: paidLeads, percentage: conversionRate / 3 },
     ];
 
@@ -125,20 +126,20 @@ export async function GET(request: NextRequest) {
         newLeads: Number(newLeads) || 0,
         conversionRate,
         workshopAttendance: workshopStats.attended,
-        revenueData: revenueData.map(item => ({
+        revenueData: revenueData.map((item) => ({
           date: format(new Date(item.date), "MMM dd"),
           amount: Number(item.amount),
         })),
-        leadsData: leadsData.map(item => ({
+        leadsData: leadsData.map((item) => ({
           date: format(new Date(item.date), "MMM dd"),
           count: Number(item.count),
         })),
-        revenueByPlan: revenueByPlan.map(item => ({
+        revenueByPlan: revenueByPlan.map((item) => ({
           plan: item.plan,
           revenue: Number(item.revenue),
           count: Number(item.count),
         })),
-        leadSources: leadSources.map(item => ({
+        leadSources: leadSources.map((item) => ({
           name: item.source || "Direct",
           value: Number(item.count),
         })),
