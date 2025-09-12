@@ -41,6 +41,12 @@ const sidebarItems = [
     badge: null,
   },
   {
+    title: "Analytics Pro",
+    icon: Activity,
+    href: "/admin/analytics-dashboard",
+    badge: "new",
+  },
+  {
     title: "Leads",
     icon: Users,
     href: "/admin/leads",

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { leads } from "@/lib/db/schema";
 import { inArray } from "drizzle-orm";
 import { z } from "zod";
+import { sendBulkEmail } from "@/lib/email";
 
 const bulkEmailSchema = z.object({
   leadIds: z.array(z.string().uuid()),
@@ -21,20 +22,31 @@ export async function POST(request: NextRequest) {
       .from(leads)
       .where(inArray(leads.id, leadIds));
 
-    // Here you would integrate with your email service
-    // For now, we'll simulate sending emails
-    const emailPromises = selectedLeads.map(async (lead) => {
-      // Simulate email sending
-      console.log(`Sending email to ${lead.email}: ${subject}`);
-      return { leadId: lead.id, status: "sent" };
+    // Send emails using Resend
+    const emailAddresses = selectedLeads.map(lead => lead.email);
+    
+    const emailResult = await sendBulkEmail({
+      recipients: emailAddresses,
+      subject,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #3B82F6;">AutomateFlow Update</h1>
+          <div style="line-height: 1.6;">
+            ${message.replace(/\n/g, '<br>')}
+          </div>
+          <p>Best regards,<br>The AutomateFlow Team</p>
+        </div>
+      `,
     });
 
-    const results = await Promise.all(emailPromises);
+    if (!emailResult.success) {
+      throw new Error(emailResult.error);
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Emails sent to ${results.length} leads`,
-      results,
+      message: `Emails sent to ${emailResult.results?.successful || 0} leads`,
+      results: emailResult.results,
     });
   } catch (error) {
     console.error("Error sending bulk emails:", error);

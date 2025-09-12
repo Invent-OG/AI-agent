@@ -1,5 +1,7 @@
 "use client";
 
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,8 +60,20 @@ import {
 import { format } from "date-fns";
 
 export default function AdminWorkshopPage() {
+  return (
+    <ProtectedRoute requiredRole="admin">
+      <AdminSidebar>
+        <WorkshopManagementContent />
+      </AdminSidebar>
+    </ProtectedRoute>
+  );
+}
+
+function WorkshopManagementContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [reminderType, setReminderType] = useState("email");
+  const [reminderMessage, setReminderMessage] = useState("");
 
   const { data: workshopStats, isLoading: statsLoading } = useQuery({
     queryKey: ["workshop-stats"],
@@ -93,9 +107,25 @@ export default function AdminWorkshopPage() {
     },
     onSuccess: () => {
       toast({ title: "Reminder sent successfully" });
+      setReminderMessage("");
     },
   });
 
+  const handleSendReminder = () => {
+    if (!reminderMessage.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a reminder message",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    sendReminder.mutate({
+      type: reminderType,
+      message: reminderMessage,
+    });
+  };
   const stats = workshopStats?.stats || {};
   const attendees = attendeesData?.attendees || [];
 

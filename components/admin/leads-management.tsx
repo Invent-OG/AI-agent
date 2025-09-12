@@ -6,6 +6,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -64,6 +66,22 @@ export function LeadsManagement() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+  const [editingLead, setEditingLead] = useState<any>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showBulkEmailDialog, setShowBulkEmailDialog] = useState(false);
+  const [bulkEmailSubject, setBulkEmailSubject] = useState("");
+  const [bulkEmailMessage, setBulkEmailMessage] = useState("");
+  
+  // Form states for create/edit
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    company: "",
+    phone: "",
+    useCase: "",
+    source: "landing",
+    status: "new",
+  });
 
   const { data: leadsData, isLoading } = useQuery({
     queryKey: ["admin-leads", statusFilter, sourceFilter],
@@ -88,6 +106,42 @@ export function LeadsManagement() {
     },
   });
 
+  const createLead = useMutation({
+    mutationFn: async (leadData: any) => {
+      const response = await fetch("/api/admin/leads/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(leadData),
+      });
+      if (!response.ok) throw new Error("Failed to create lead");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leads-stats"] });
+      toast({ title: "Lead created successfully" });
+      setShowCreateDialog(false);
+      resetForm();
+    },
+  });
+
+  const updateLead = useMutation({
+    mutationFn: async ({ leadId, data }: { leadId: string; data: any }) => {
+      const response = await fetch(`/api/admin/leads/${leadId}/edit`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update lead");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
+      toast({ title: "Lead updated successfully" });
+      setEditingLead(null);
+      resetForm();
+    },
+  });
   const updateLeadStatus = useMutation({
     mutationFn: async ({ leadId, status }: { leadId: string; status: string }) => {
       const response = await fetch(`/api/admin/leads/${leadId}/status`, {
@@ -114,6 +168,7 @@ export function LeadsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leads-stats"] });
       toast({ title: "Lead deleted successfully" });
     },
   });
@@ -148,9 +203,61 @@ export function LeadsManagement() {
     onSuccess: () => {
       toast({ title: "Bulk emails sent successfully" });
       setSelectedLeads([]);
+      setShowBulkEmailDialog(false);
+      setBulkEmailSubject("");
+      setBulkEmailMessage("");
     },
   });
 
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      email: "",
+      company: "",
+      phone: "",
+      useCase: "",
+      source: "landing",
+      status: "new",
+    });
+  };
+
+  const handleEdit = (lead: any) => {
+    setEditingLead(lead);
+    setFormData({
+      name: lead.name,
+      email: lead.email,
+      company: lead.company || "",
+      phone: lead.phone || "",
+      useCase: lead.useCase || "",
+      source: lead.source,
+      status: lead.status,
+    });
+  };
+
+  const handleSubmit = () => {
+    if (editingLead) {
+      updateLead.mutate({ leadId: editingLead.id, data: formData });
+    } else {
+      createLead.mutate(formData);
+    }
+  };
+
+  const handleBulkEmail = () => {
+    if (!bulkEmailSubject.trim() || !bulkEmailMessage.trim()) {
+      toast({
+        title: "Error",
+        description: "Please fill in both subject and message",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    sendBulkEmail.mutate({
+      leadIds: selectedLeads,
+      subject: bulkEmailSubject,
+      message: bulkEmailMessage,
+    });
+  };
   const leads = leadsData?.leads || [];
   const stats = statsData?.stats || {};
 
@@ -325,6 +432,7 @@ export function LeadsManagement() {
               <Button
                 variant="outline"
                 className="border-gray-700 text-gray-300"
+                onClick={() => setShowBulkEmailDialog(true)}
               >
                 <Mail className="w-4 h-4 mr-2" />
                 Bulk Email ({selectedLeads.length})
@@ -347,6 +455,7 @@ export function LeadsManagement() {
                 <Plus className="w-4 h-4 mr-2" />
                 Add Lead
               </Button>
+                onClick={() => setShowCreateDialog(true)}
             </div>
           </div>
         </CardHeader>
@@ -418,7 +527,20 @@ export function LeadsManagement() {
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
+                            onClick={() => handleEdit(lead)}
                             <Mail className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="text-red-400 hover:text-red-300"
+                            onClick={() => {
+                              if (confirm("Are you sure you want to delete this lead?")) {
+                                deleteLead.mutate(lead.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                           <Select onValueChange={(status) => updateLeadStatus.mutate({ leadId: lead.id, status })}>
                             <SelectTrigger className="w-32 h-8 bg-gray-800 border-gray-700 text-white">
@@ -448,6 +570,175 @@ export function LeadsManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create/Edit Lead Dialog */}
+      <Dialog open={showCreateDialog || !!editingLead} onOpenChange={(open) => {
+        if (!open) {
+          setShowCreateDialog(false);
+          setEditingLead(null);
+          resetForm();
+        }
+      }}>
+        <DialogContent className="bg-gray-900 border-gray-800 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              {editingLead ? "Edit Lead" : "Create New Lead"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Name *</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                  placeholder="Full name"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Email *</Label>
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                  placeholder="Email address"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Company</Label>
+                <Input
+                  value={formData.company}
+                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                  placeholder="Company name"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Phone</Label>
+                <Input
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                  placeholder="Phone number"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Source</Label>
+                <Select value={formData.source} onValueChange={(value) => setFormData({ ...formData, source: value })}>
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="landing">Landing Page</SelectItem>
+                    <SelectItem value="audit">Free Audit</SelectItem>
+                    <SelectItem value="workshop">Workshop</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-gray-300">Status</Label>
+                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="registered">Registered</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div>
+              <Label className="text-gray-300">Use Case</Label>
+              <Textarea
+                value={formData.useCase}
+                onChange={(e) => setFormData({ ...formData, useCase: e.target.value })}
+                className="bg-gray-800 border-gray-700 text-white"
+                placeholder="What would they like to automate?"
+                rows={3}
+              />
+            </div>
+            
+            <div className="flex gap-3 pt-4">
+              <Button 
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                onClick={handleSubmit}
+                disabled={createLead.isPending || updateLead.isPending}
+              >
+                {editingLead ? "Update Lead" : "Create Lead"}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-gray-700 text-gray-300"
+                onClick={() => {
+                  setShowCreateDialog(false);
+                  setEditingLead(null);
+                  resetForm();
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Email Dialog */}
+      <Dialog open={showBulkEmailDialog} onOpenChange={setShowBulkEmailDialog}>
+        <DialogContent className="bg-gray-900 border-gray-800">
+          <DialogHeader>
+            <DialogTitle className="text-white">Send Bulk Email</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-gray-300">Subject</Label>
+              <Input
+                value={bulkEmailSubject}
+                onChange={(e) => setBulkEmailSubject(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white"
+                placeholder="Email subject"
+              />
+            </div>
+            <div>
+              <Label className="text-gray-300">Message</Label>
+              <Textarea
+                value={bulkEmailMessage}
+                onChange={(e) => setBulkEmailMessage(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white"
+                placeholder="Email message..."
+                rows={6}
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button 
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                onClick={handleBulkEmail}
+                disabled={sendBulkEmail.isPending}
+              >
+                <Send className="w-4 h-4 mr-2" />
+                {sendBulkEmail.isPending ? "Sending..." : `Send to ${selectedLeads.length} leads`}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-gray-700 text-gray-300"
+                onClick={() => setShowBulkEmailDialog(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

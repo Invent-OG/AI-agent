@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { leads } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { sendBulkEmail, emailTemplates } from "@/lib/email";
 
 const reminderSchema = z.object({
   type: z.enum(["email", "sms", "both"]),
@@ -20,24 +21,35 @@ export async function POST(request: NextRequest) {
       .from(leads)
       .where(eq(leads.source, "workshop"));
 
-    // Here you would integrate with your email/SMS service
-    // For now, we'll simulate sending reminders
-    const reminderPromises = attendees.map(async (attendee) => {
-      if (type === "email" || type === "both") {
-        console.log(`Sending email reminder to ${attendee.email}: ${message}`);
-      }
-      if (type === "sms" || type === "both") {
-        console.log(`Sending SMS reminder to ${attendee.phone}: ${message}`);
-      }
-      return { attendeeId: attendee.id, status: "sent" };
-    });
+    let emailResults = null;
+    
+    // Send email reminders
+    if (type === "email" || type === "both") {
+      const emailAddresses = attendees.map(attendee => attendee.email);
+      emailResults = await sendBulkEmail({
+        recipients: emailAddresses,
+        subject: "Workshop Reminder - AutomateFlow",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #8B5CF6;">Workshop Reminder</h1>
+            <div style="line-height: 1.6;">
+              ${message.replace(/\n/g, '<br>')}
+            </div>
+            <p>Best regards,<br>The AutomateFlow Team</p>
+          </div>
+        `,
+      });
+    }
+    
+    // SMS functionality would go here for type === "sms" || type === "both"
+    // For now, we'll focus on email implementation
 
-    const results = await Promise.all(reminderPromises);
+    const totalSent = emailResults?.results?.successful || 0;
 
     return NextResponse.json({
       success: true,
-      message: `Reminders sent to ${results.length} attendees`,
-      results,
+      message: `Reminders sent to ${totalSent} attendees`,
+      results: emailResults?.results,
     });
   } catch (error) {
     console.error("Error sending reminders:", error);

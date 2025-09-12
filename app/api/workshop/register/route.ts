@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { leads, payments } from "@/lib/db/schema";
 import { z } from "zod";
+import { sendEmail, emailTemplates } from "@/lib/email";
 
 const registrationSchema = z.object({
   name: z.string().min(1),
@@ -48,6 +49,14 @@ export async function POST(request: NextRequest) {
       .set({ cashfreeOrderId })
       .where(eq(payments.id, payment.id));
 
+    // Send welcome email
+    if (process.env.RESEND_API_KEY) {
+      await sendEmail({
+        to: newLead.email,
+        subject: "Workshop Registration Confirmed!",
+        html: emailTemplates.welcome(newLead.name),
+      });
+    }
     // Mock Cashfree payment URL
     const paymentUrl = `https://sandbox.cashfree.com/pg/orders/${cashfreeOrderId}`;
 

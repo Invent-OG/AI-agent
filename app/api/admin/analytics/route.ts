@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { leads, payments } from "@/lib/db/schema";
 import { sql, eq, gte, and } from "drizzle-orm";
-import { alias } from "drizzle-orm/pg-core";
 import { subDays, format } from "date-fns";
 
 export async function GET() {
@@ -32,16 +31,15 @@ export async function GET() {
       .orderBy(sql`date(created_at)`);
 
     // Get revenue by day
-    const p = alias(payments, "p");
     const revenueData = await db
       .select({
-        date: sql<string>`date(${p.createdAt})`,
-        amount: sql<number>`sum(cast(${p.amount} as decimal))`,
+        date: sql<string>`date(created_at)`,
+        amount: sql<number>`sum(cast(amount as decimal))`,
       })
-      .from(p)
-      .where(and(eq(p.status, "success"), gte(p.createdAt, thirtyDaysAgo)))
-      .groupBy(sql`date(${p.createdAt})`)
-      .orderBy(sql`date(${p.createdAt})`);
+      .from(payments)
+      .where(and(eq(payments.status, "success"), gte(payments.createdAt, thirtyDaysAgo)))
+      .groupBy(sql`date(created_at)`)
+      .orderBy(sql`date(created_at)`);
 
     // Format data for charts
     const formatData = (data: any[], dateField: string = "date") => {

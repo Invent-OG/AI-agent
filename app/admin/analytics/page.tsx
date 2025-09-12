@@ -1,5 +1,7 @@
 "use client";
 
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +23,16 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 
 export default function AnalyticsPage() {
+  return (
+    <ProtectedRoute requiredRole="admin">
+      <AdminSidebar>
+        <AnalyticsPageContent />
+      </AdminSidebar>
+    </ProtectedRoute>
+  );
+}
+
+function AnalyticsPageContent() {
   const { data: statsData } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
@@ -49,7 +61,7 @@ export default function AnalyticsPage() {
           className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
         >
           <div className="flex items-center space-x-4">
-            <Link href="/admin/workshop">
+            <Link href="/admin">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Dashboard
@@ -185,5 +197,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
     </div>
+  );
+}
   );
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { payments, leads } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
+import { sendEmail, emailTemplates } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,6 +36,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get lead information
+    const [lead] = await db
+      .select()
+      .from(leads)
+      .where(eq(leads.id, payment.leadId))
     let paymentStatus = 'pending'
     let leadStatus = 'registered'
 
@@ -65,7 +71,18 @@ export async function POST(request: NextRequest) {
         })
         .where(eq(leads.id, payment.leadId))
 
-      // Here you would trigger email notifications, WhatsApp messages, etc.
+      // Send payment confirmation email
+      if (lead && process.env.RESEND_API_KEY) {
+        await sendEmail({
+          to: lead.email,
+          subject: "Payment Confirmed - AutomateFlow",
+          html: emailTemplates.paymentConfirmation(
+            lead.name,
+            payment.amount,
+            payment.plan
+          ),
+        });
+      }
     }
 
     return NextResponse.json({ success: true })
