@@ -71,7 +71,7 @@ export function LeadsManagement() {
   const [showBulkEmailDialog, setShowBulkEmailDialog] = useState(false);
   const [bulkEmailSubject, setBulkEmailSubject] = useState("");
   const [bulkEmailMessage, setBulkEmailMessage] = useState("");
-  
+
   // Form states for create/edit
   const [formData, setFormData] = useState({
     name: "",
@@ -89,7 +89,7 @@ export function LeadsManagement() {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.append("status", statusFilter);
       if (sourceFilter !== "all") params.append("source", sourceFilter);
-      
+
       const response = await fetch(`/api/leads?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch leads");
       return response.json();
@@ -143,7 +143,13 @@ export function LeadsManagement() {
     },
   });
   const updateLeadStatus = useMutation({
-    mutationFn: async ({ leadId, status }: { leadId: string; status: string }) => {
+    mutationFn: async ({
+      leadId,
+      status,
+    }: {
+      leadId: string;
+      status: string;
+    }) => {
       const response = await fetch(`/api/admin/leads/${leadId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -191,7 +197,15 @@ export function LeadsManagement() {
   });
 
   const sendBulkEmail = useMutation({
-    mutationFn: async ({ leadIds, subject, message }: { leadIds: string[]; subject: string; message: string }) => {
+    mutationFn: async ({
+      leadIds,
+      subject,
+      message,
+    }: {
+      leadIds: string[];
+      subject: string;
+      message: string;
+    }) => {
       const response = await fetch("/api/admin/leads/bulk-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -251,7 +265,7 @@ export function LeadsManagement() {
       });
       return;
     }
-    
+
     sendBulkEmail.mutate({
       leadIds: selectedLeads,
       subject: bulkEmailSubject,
@@ -262,31 +276,53 @@ export function LeadsManagement() {
   const stats = statsData?.stats || {};
 
   const filteredLeads = leads.filter((lead: any) => {
-    const matchesSearch = 
+    const matchesSearch =
       lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (lead.company && lead.company.toLowerCase().includes(searchTerm.toLowerCase()));
+      (lead.company &&
+        lead.company.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesSearch;
   });
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      new: { variant: "secondary", color: "bg-blue-100 text-blue-800", label: "New" },
-      registered: { variant: "default", color: "bg-yellow-100 text-yellow-800", label: "Registered" },
-      paid: { variant: "default", color: "bg-green-100 text-green-800", label: "Paid" },
+      new: {
+        variant: "secondary",
+        color: "bg-blue-100 text-blue-800",
+        label: "New",
+      },
+      registered: {
+        variant: "default",
+        color: "bg-yellow-100 text-yellow-800",
+        label: "Registered",
+      },
+      paid: {
+        variant: "default",
+        color: "bg-green-100 text-green-800",
+        label: "Paid",
+      },
     };
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.new;
+    const config =
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.new;
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
   const getSourceBadge = (source: string) => {
     const sourceConfig = {
-      landing: { color: "bg-purple-100 text-purple-800", label: "Landing Page" },
+      landing: {
+        color: "bg-purple-100 text-purple-800",
+        label: "Landing Page",
+      },
       audit: { color: "bg-orange-100 text-orange-800", label: "Free Audit" },
       workshop: { color: "bg-green-100 text-green-800", label: "Workshop" },
     };
-    const config = sourceConfig[source as keyof typeof sourceConfig] || sourceConfig.landing;
-    return <Badge variant="outline" className={config.color}>{config.label}</Badge>;
+    const config =
+      sourceConfig[source as keyof typeof sourceConfig] || sourceConfig.landing;
+    return (
+      <Badge variant="outline" className={config.color}>
+        {config.label}
+      </Badge>
+    );
   };
 
   return (
@@ -301,7 +337,9 @@ export function LeadsManagement() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-leads"] })}
+            onClick={() =>
+              queryClient.invalidateQueries({ queryKey: ["admin-leads"] })
+            }
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
@@ -346,7 +384,9 @@ export function LeadsManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Total Leads</p>
-                <p className="text-2xl font-bold text-blue-400">{stats.total || 0}</p>
+                <p className="text-2xl font-bold text-blue-400">
+                  {stats.total || 0}
+                </p>
               </div>
               <Users className="w-8 h-8 text-blue-400 opacity-60" />
             </div>
@@ -358,7 +398,9 @@ export function LeadsManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">New Leads</p>
-                <p className="text-2xl font-bold text-green-400">{stats.new || 0}</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {stats.new || 0}
+                </p>
               </div>
               <UserPlus className="w-8 h-8 text-green-400 opacity-60" />
             </div>
@@ -370,7 +412,9 @@ export function LeadsManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Conversion Rate</p>
-                <p className="text-2xl font-bold text-purple-400">{stats.conversionRate || 0}%</p>
+                <p className="text-2xl font-bold text-purple-400">
+                  {stats.conversionRate || 0}%
+                </p>
               </div>
               <Target className="w-8 h-8 text-purple-400 opacity-60" />
             </div>
@@ -382,7 +426,9 @@ export function LeadsManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">This Month</p>
-                <p className="text-2xl font-bold text-orange-400">{stats.thisMonth || 0}</p>
+                <p className="text-2xl font-bold text-orange-400">
+                  {stats.thisMonth || 0}
+                </p>
               </div>
               <TrendingUp className="w-8 h-8 text-orange-400 opacity-60" />
             </div>
@@ -403,7 +449,7 @@ export function LeadsManagement() {
                 className="pl-10 bg-gray-800 border-gray-700 text-white"
               />
             </div>
-            
+
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-48 bg-gray-800 border-gray-700 text-white">
                 <SelectValue placeholder="Filter by status" />
@@ -451,11 +497,15 @@ export function LeadsManagement() {
               All Leads ({filteredLeads.length})
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="border-gray-700 text-gray-300">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-700 text-gray-300"
+                onClick={() => setShowCreateDialog(true)}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Lead
               </Button>
-                onClick={() => setShowCreateDialog(true)}
             </div>
           </div>
         </CardHeader>
@@ -475,7 +525,9 @@ export function LeadsManagement() {
                         className="rounded"
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedLeads(filteredLeads.map((lead: any) => lead.id));
+                            setSelectedLeads(
+                              filteredLeads.map((lead: any) => lead.id)
+                            );
                           } else {
                             setSelectedLeads([]);
                           }
@@ -494,7 +546,10 @@ export function LeadsManagement() {
                 </TableHeader>
                 <TableBody>
                   {filteredLeads.map((lead: any) => (
-                    <TableRow key={lead.id} className="border-gray-800 hover:bg-gray-800/50">
+                    <TableRow
+                      key={lead.id}
+                      className="border-gray-800 hover:bg-gray-800/50"
+                    >
                       <TableCell>
                         <input
                           type="checkbox"
@@ -504,51 +559,86 @@ export function LeadsManagement() {
                             if (e.target.checked) {
                               setSelectedLeads([...selectedLeads, lead.id]);
                             } else {
-                              setSelectedLeads(selectedLeads.filter(id => id !== lead.id));
+                              setSelectedLeads(
+                                selectedLeads.filter((id) => id !== lead.id)
+                              );
                             }
                           }}
                         />
                       </TableCell>
-                      <TableCell className="font-medium text-white">{lead.name}</TableCell>
-                      <TableCell className="text-gray-300">{lead.email}</TableCell>
-                      <TableCell className="text-gray-300">{lead.company || '-'}</TableCell>
-                      <TableCell className="text-gray-300">{lead.phone || '-'}</TableCell>
+                      <TableCell className="font-medium text-white">
+                        {lead.name}
+                      </TableCell>
+                      <TableCell className="text-gray-300">
+                        {lead.email}
+                      </TableCell>
+                      <TableCell className="text-gray-300">
+                        {lead.company || "-"}
+                      </TableCell>
+                      <TableCell className="text-gray-300">
+                        {lead.phone || "-"}
+                      </TableCell>
                       <TableCell>{getStatusBadge(lead.status)}</TableCell>
                       <TableCell>{getSourceBadge(lead.source)}</TableCell>
                       <TableCell className="text-gray-300">
-                        {format(new Date(lead.createdAt), 'MMM dd, yyyy')}
+                        {format(new Date(lead.createdAt), "MMM dd, yyyy")}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-gray-400 hover:text-white"
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-gray-400 hover:text-white"
+                            onClick={() => handleEdit(lead)}
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
-                            onClick={() => handleEdit(lead)}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-gray-400 hover:text-white"
+                          >
                             <Mail className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             className="text-red-400 hover:text-red-300"
                             onClick={() => {
-                              if (confirm("Are you sure you want to delete this lead?")) {
+                              if (
+                                confirm(
+                                  "Are you sure you want to delete this lead?"
+                                )
+                              ) {
                                 deleteLead.mutate(lead.id);
                               }
                             }}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                          <Select onValueChange={(status) => updateLeadStatus.mutate({ leadId: lead.id, status })}>
+                          <Select
+                            onValueChange={(status) =>
+                              updateLeadStatus.mutate({
+                                leadId: lead.id,
+                                status,
+                              })
+                            }
+                          >
                             <SelectTrigger className="w-32 h-8 bg-gray-800 border-gray-700 text-white">
                               <SelectValue placeholder="Status" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="new">New</SelectItem>
-                              <SelectItem value="registered">Registered</SelectItem>
+                              <SelectItem value="registered">
+                                Registered
+                              </SelectItem>
                               <SelectItem value="paid">Paid</SelectItem>
                             </SelectContent>
                           </Select>
@@ -558,7 +648,7 @@ export function LeadsManagement() {
                   ))}
                 </TableBody>
               </Table>
-              
+
               {filteredLeads.length === 0 && (
                 <div className="text-center py-12 text-gray-400">
                   <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -572,13 +662,16 @@ export function LeadsManagement() {
       </Card>
 
       {/* Create/Edit Lead Dialog */}
-      <Dialog open={showCreateDialog || !!editingLead} onOpenChange={(open) => {
-        if (!open) {
-          setShowCreateDialog(false);
-          setEditingLead(null);
-          resetForm();
-        }
-      }}>
+      <Dialog
+        open={showCreateDialog || !!editingLead}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowCreateDialog(false);
+            setEditingLead(null);
+            resetForm();
+          }
+        }}
+      >
         <DialogContent className="bg-gray-900 border-gray-800 max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-white">
@@ -591,7 +684,9 @@ export function LeadsManagement() {
                 <Label className="text-gray-300">Name *</Label>
                 <Input
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="bg-gray-800 border-gray-700 text-white"
                   placeholder="Full name"
                 />
@@ -601,19 +696,23 @@ export function LeadsManagement() {
                 <Input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   className="bg-gray-800 border-gray-700 text-white"
                   placeholder="Email address"
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-gray-300">Company</Label>
                 <Input
                   value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, company: e.target.value })
+                  }
                   className="bg-gray-800 border-gray-700 text-white"
                   placeholder="Company name"
                 />
@@ -622,17 +721,24 @@ export function LeadsManagement() {
                 <Label className="text-gray-300">Phone</Label>
                 <Input
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   className="bg-gray-800 border-gray-700 text-white"
                   placeholder="Phone number"
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-gray-300">Source</Label>
-                <Select value={formData.source} onValueChange={(value) => setFormData({ ...formData, source: value })}>
+                <Select
+                  value={formData.source}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, source: value })
+                  }
+                >
                   <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -645,7 +751,12 @@ export function LeadsManagement() {
               </div>
               <div>
                 <Label className="text-gray-300">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, status: value })
+                  }
+                >
                   <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -657,28 +768,30 @@ export function LeadsManagement() {
                 </Select>
               </div>
             </div>
-            
+
             <div>
               <Label className="text-gray-300">Use Case</Label>
               <Textarea
                 value={formData.useCase}
-                onChange={(e) => setFormData({ ...formData, useCase: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, useCase: e.target.value })
+                }
                 className="bg-gray-800 border-gray-700 text-white"
                 placeholder="What would they like to automate?"
                 rows={3}
               />
             </div>
-            
+
             <div className="flex gap-3 pt-4">
-              <Button 
+              <Button
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
                 onClick={handleSubmit}
                 disabled={createLead.isPending || updateLead.isPending}
               >
                 {editingLead ? "Update Lead" : "Create Lead"}
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-gray-700 text-gray-300"
                 onClick={() => {
                   setShowCreateDialog(false);
@@ -720,16 +833,18 @@ export function LeadsManagement() {
               />
             </div>
             <div className="flex gap-3">
-              <Button 
+              <Button
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
                 onClick={handleBulkEmail}
                 disabled={sendBulkEmail.isPending}
               >
                 <Send className="w-4 h-4 mr-2" />
-                {sendBulkEmail.isPending ? "Sending..." : `Send to ${selectedLeads.length} leads`}
+                {sendBulkEmail.isPending
+                  ? "Sending..."
+                  : `Send to ${selectedLeads.length} leads`}
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-gray-700 text-gray-300"
                 onClick={() => setShowBulkEmailDialog(false)}
               >

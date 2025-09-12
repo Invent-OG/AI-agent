@@ -1,12 +1,18 @@
-import { Resend } from 'resend';
+import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is not set");
+  }
+  return new Resend(apiKey);
+}
 
 export async function sendEmail({
   to,
   subject,
   html,
-  from = 'AutomateFlow <noreply@automateflow.com>',
+  from = "AutomateFlow <noreply@automateflow.com>",
 }: {
   to: string | string[];
   subject: string;
@@ -14,6 +20,7 @@ export async function sendEmail({
   from?: string;
 }) {
   try {
+    const resend = getResend();
     const { data, error } = await resend.emails.send({
       from,
       to,
@@ -22,14 +29,16 @@ export async function sendEmail({
     });
 
     if (error) {
-      console.error('Email send error:', error);
+      console.error("Email send error:", error);
       return { success: false, error: error.message };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error('Email service error:', error);
-    return { success: false, error: 'Failed to send email' };
+    console.error("Email service error:", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to send email";
+    return { success: false, error: message };
   }
 }
 
@@ -37,7 +46,7 @@ export async function sendBulkEmail({
   recipients,
   subject,
   html,
-  from = 'AutomateFlow <noreply@automateflow.com>',
+  from = "AutomateFlow <noreply@automateflow.com>",
 }: {
   recipients: string[];
   subject: string;
@@ -45,21 +54,21 @@ export async function sendBulkEmail({
   from?: string;
 }) {
   try {
-    const emailPromises = recipients.map(email =>
+    const emailPromises = recipients.map((email) =>
       sendEmail({ to: email, subject, html, from })
     );
 
     const results = await Promise.all(emailPromises);
-    const successful = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success).length;
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
 
     return {
       success: true,
-      results: { successful, failed, total: recipients.length }
+      results: { successful, failed, total: recipients.length },
     };
   } catch (error) {
-    console.error('Bulk email error:', error);
-    return { success: false, error: 'Failed to send bulk emails' };
+    console.error("Bulk email error:", error);
+    return { success: false, error: "Failed to send bulk emails" };
   }
 }
 
@@ -72,7 +81,7 @@ export const emailTemplates = {
       <p>Best regards,<br>The AutomateFlow Team</p>
     </div>
   `,
-  
+
   workshopReminder: (name: string, workshopDate: string) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h1 style="color: #8B5CF6;">Workshop Reminder</h1>
@@ -82,7 +91,7 @@ export const emailTemplates = {
       <p>Best regards,<br>The AutomateFlow Team</p>
     </div>
   `,
-  
+
   paymentConfirmation: (name: string, amount: string, plan: string) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h1 style="color: #10B981;">Payment Confirmed!</h1>
@@ -91,5 +100,5 @@ export const emailTemplates = {
       <p>You now have full access to all course materials and the community.</p>
       <p>Best regards,<br>The AutomateFlow Team</p>
     </div>
-  `
+  `,
 };

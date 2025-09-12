@@ -34,17 +34,17 @@ const sidebarItems = [
     href: "/admin",
     badge: null,
   },
-  {
-    title: "Analytics",
-    icon: TrendingUp,
-    href: "/admin/analytics",
-    badge: null,
-  },
+  // {
+  //   title: "Analytics",
+  //   icon: TrendingUp,
+  //   href: "/admin/analytics",
+  //   badge: null,
+  // },
   {
     title: "Analytics Pro",
-    icon: Activity,
+    icon: TrendingUp,
     href: "/admin/analytics-dashboard",
-    badge: "new",
+    // badge: "new",
   },
   {
     title: "Leads",
@@ -107,11 +107,13 @@ export function AdminSidebar({ children }: AdminSidebarProps) {
   };
 
   const getInitials = (name: string) => {
-    return name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || "A";
+    return (
+      name
+        ?.split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase() || "A"
+    );
   };
 
   return (
@@ -197,9 +199,10 @@ export function AdminSidebar({ children }: AdminSidebarProps) {
                 variant={isActive ? "secondary" : "ghost"}
                 className={`
                   w-full justify-start text-left h-12
-                  ${isActive 
-                    ? "bg-blue-600 text-white hover:bg-blue-700" 
-                    : "text-gray-300 hover:text-white hover:bg-gray-800"
+                  ${
+                    isActive
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "text-gray-300 hover:text-white hover:bg-gray-800"
                   }
                   ${isCollapsed ? "px-3" : "px-4"}
                 `}
@@ -264,9 +267,7 @@ export function AdminSidebar({ children }: AdminSidebarProps) {
         </div>
 
         {/* Content */}
-        <main className="flex-1 overflow-auto bg-gray-950">
-          {children}
-        </main>
+        <main className="flex-1 overflow-auto bg-gray-950">{children}</main>
       </div>
     </div>
   );

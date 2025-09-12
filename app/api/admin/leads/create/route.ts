@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { leads } from "@/lib/db/schema";
 import { z } from "zod";
 import { sendEmail, emailTemplates } from "@/lib/email";
+import { eq } from "drizzle-orm";
 
 const createLeadSchema = z.object({
   name: z.string().min(1),
@@ -33,10 +34,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [newLead] = await db
-      .insert(leads)
-      .values(validatedData)
-      .returning();
+    const [newLead] = await db.insert(leads).values(validatedData).returning();
 
     // Send welcome email
     if (process.env.RESEND_API_KEY) {
