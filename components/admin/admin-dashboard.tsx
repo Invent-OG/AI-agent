@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardStats } from "./dashboard-stats";
-import { AnalyticsChart } from "./analytics-chart";
 import {
   Users,
   DollarSign,
@@ -53,7 +52,9 @@ export function AdminDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="text-gray-400">Welcome back! Here's what's happening.</p>
+          <p className="text-gray-400">
+            Welcome back! Here&apos;s what&apos;s happening.
+          </p>
         </div>
         <div className="flex items-center space-x-2">
           <div className="flex items-center space-x-2 text-sm text-gray-400">
@@ -100,7 +101,7 @@ export function AdminDashboard() {
                 Analytics Overview
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            {/* <CardContent>
               {analyticsLoading ? (
                 <div className="h-[400px] flex items-center justify-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -116,7 +117,7 @@ export function AdminDashboard() {
                   }
                 />
               )}
-            </CardContent>
+            </CardContent> */}
           </Card>
         </div>
 
@@ -146,8 +147,8 @@ export function AdminDashboard() {
                           lead.status === "paid"
                             ? "bg-green-900 text-green-300"
                             : lead.status === "registered"
-                            ? "bg-blue-900 text-blue-300"
-                            : "bg-gray-700 text-gray-300"
+                              ? "bg-blue-900 text-blue-300"
+                              : "bg-gray-700 text-gray-300"
                         }`}
                       >
                         {lead.status}

@@ -27,7 +27,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DashboardStats } from "./dashboard-stats";
-import { AnalyticsChart } from "./analytics-chart";
 import { LeadsTable } from "./leads-table";
 import {
   BarChart3,
@@ -408,7 +407,7 @@ export function FuturisticDashboard() {
                         Workshop Analytics
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    {/* <CardContent>
                       {analyticsLoading ? (
                         <div className="h-[400px] flex items-center justify-center">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -424,7 +423,7 @@ export function FuturisticDashboard() {
                           }
                         />
                       )}
-                    </CardContent>
+                    </CardContent> */}
                   </Card>
                 </div>
                 <div className="space-y-6">
