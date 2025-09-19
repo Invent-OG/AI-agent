@@ -30,12 +30,12 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
+  ResponsiveContainer as RechartsResponsiveContainer,
   PieChart,
   Pie,
   Cell,
+  BarChart,
+  Bar,
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -246,7 +246,11 @@ export function PaymentsManagement() {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <RechartsResponsiveContainer
+                {...({} as any)}
+                width="100%"
+                height="100%"
+              >
                 <LineChart data={revenue.trend || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="date" stroke="#9CA3AF" />
@@ -266,7 +270,7 @@ export function PaymentsManagement() {
                     strokeWidth={2}
                   />
                 </LineChart>
-              </ResponsiveContainer>
+              </RechartsResponsiveContainer>
             </div>
           </CardContent>
         </Card>
@@ -280,7 +284,11 @@ export function PaymentsManagement() {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <RechartsResponsiveContainer
+                {...({} as any)}
+                width="100%"
+                height="100%"
+              >
                 <PieChart>
                   <Pie
                     data={revenue.byPlan || []}
@@ -310,7 +318,7 @@ export function PaymentsManagement() {
                     }}
                   />
                 </PieChart>
-              </ResponsiveContainer>
+              </RechartsResponsiveContainer>
             </div>
           </CardContent>
         </Card>
