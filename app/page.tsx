@@ -9,6 +9,7 @@ import { AnimatedFAQ } from "@/components/futuristic/animated-faq";
 import { RegistrationForm } from "@/components/futuristic/registration-form";
 import { FinalCTA } from "@/components/futuristic/final-cta";
 import { Hero2 } from "@/components/ui/hero";
+import FeatureSection from "@/components/landing/FeatureSection";
 
 export default function WorkshopPage() {
   return (
@@ -58,7 +59,8 @@ export default function WorkshopPage() {
         <AnimatedFAQ />
       </section>
 
-      <FinalCTA />
+      {/* <FinalCTA /> */}
+      <FeatureSection />
     </div>
   );
 }

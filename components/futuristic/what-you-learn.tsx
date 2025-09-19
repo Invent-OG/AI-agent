@@ -99,10 +99,10 @@ export function WhatYouLearn() {
           {learningPoints.map((point, index) => (
             <div
               key={point.title}
-              className="learning-point flex items-start space-x-6 p-6 glass-dark rounded-2xl border border-gray-700/50"
+              className="learning-point flex items-start space-x-6 p-6 glass-dark rounded-[3rem] border border-gray-700/50"
             >
               <div className="flex-shrink-0">
-                <div className="p-3 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl">
+                <div className="p-3 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-[3rem]">
                   <point.icon className="w-8 h-8 text-blue-400" />
                 </div>
               </div>
@@ -114,7 +114,6 @@ export function WhatYouLearn() {
                   {point.description}
                 </p>
               </div>
-              <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0 mt-2" />
             </div>
           ))}
         </div>

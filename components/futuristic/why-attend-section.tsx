@@ -127,11 +127,11 @@ export function WhyAttendSection() {
           {benefits.map((benefit, index) => (
             <Card
               key={benefit.title}
-              className="benefit-card glass-dark border-gray-700/50 hover:border-blue-500/50 transition-all duration-300 group"
+              className="benefit-card glass-dark border-gray-700/50 rounded-[3rem] hover:border-white/50 transition-all duration-300 group"
             >
               <CardContent className="p-8 text-center">
                 <div
-                  className={`inline-flex p-4 rounded-2xl bg-gray-800/50 mb-6 group-hover:scale-110 transition-transform duration-300`}
+                  className={`inline-flex p-4 rounded-[3rem] bg-gray-800/50 mb-6 group-hover:scale-110 transition-transform duration-300`}
                 >
                   <benefit.icon className={`w-8 h-8 ${benefit.color}`} />
                 </div>

@@ -144,7 +144,7 @@ export function Testimonials3D() {
           {testimonials.map((testimonial, index) => (
             <Card
               key={testimonial.name}
-              className="testimonial-card glass-dark border-gray-700/50 hover:border-blue-500/50 transition-all duration-300 cursor-pointer"
+              className="testimonial-card glass-dark rounded-[3rem] border-gray-700/50 hover:border-white/50 transition-all duration-300 cursor-pointer"
             >
               <CardContent className="p-8">
                 <div className="flex items-center mb-6">
