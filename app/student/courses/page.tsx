@@ -236,10 +236,10 @@ export default function StudentCoursesPage() {
                             {course.progress || 0}%
                           </span>
                         </div>
-                        <Progress
+                        {/* <Progress
                           value={course.progress}
                           className="h-3"
-                        />{" "}
+                        />{" "} */}
                       </div>
 
                       <div className="flex items-center justify-between">

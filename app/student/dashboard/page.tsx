@@ -254,7 +254,7 @@ export default function StudentDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <Progress value={progress} className="h-3" />
+                    {/* <Progress value={Number(progress) || 0} className="h-3" /> */}
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {progress}% Complete
                     </p>
@@ -450,7 +450,10 @@ export default function StudentDashboard() {
                             {course.progress || 0}%
                           </span>
                         </div>
-                        <Progress value={course.progress} className="h-3" />
+                        {/* <Progress
+                          value={Number(course.progress) || 0}
+                          className="h-3"
+                        /> */}
                       </div>
 
                       <div className="flex items-center justify-between">

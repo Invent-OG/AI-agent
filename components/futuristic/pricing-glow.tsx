@@ -144,10 +144,10 @@ export function PricingGlow() {
                 <div className="text-sm sm:text-base text-gray-600 dark:text-gray-400 font-medium mb-2">
                   72 / 100 seats filled
                 </div>
-                <Progress
+                {/* <Progress
                   value={72}
                   className="h-3 bg-gray-200 dark:bg-gray-700"
-                />
+                /> */}
               </div>
 
               <Button

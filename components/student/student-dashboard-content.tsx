@@ -84,7 +84,10 @@ export function StudentDashboardContent() {
               </div>
               <BookOpen className="w-8 h-8 text-blue-400 opacity-60" />
             </div>
-            <Progress value={getProgressPercentage()} className="mt-3" />
+            {/* <Progress
+              value={Number(getProgressPercentage() || 0)}
+              className="mt-3"
+            /> */}
           </CardContent>
         </Card>
 
@@ -252,7 +255,9 @@ export function StudentDashboardContent() {
                 {student?.workshopStatus === "registered" ? (
                   <>
                     <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                    <h3 className="text-green-400 font-bold mb-2">Registered!</h3>
+                    <h3 className="text-green-400 font-bold mb-2">
+                      Registered!
+                    </h3>
                     <p className="text-gray-400 text-sm mb-4">
                       You're all set for the workshop
                     </p>

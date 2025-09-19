@@ -218,7 +218,10 @@ export function StudentDashboard() {
                   </div>
                   <BookOpen className="w-8 h-8 text-blue-600 opacity-60" />
                 </div>
-                <Progress value={getProgressPercentage()} className="mt-2" />
+                {/* <Progress
+                  value={Number(getProgressPercentage() || 0)}
+                  className="mt-2"
+                /> */}
               </CardContent>
             </Card>
 
@@ -940,10 +943,10 @@ export function StudentDashboard() {
                             {getProgressPercentage()}%
                           </span>
                         </div>
-                        <Progress
+                        {/* <Progress
                           value={getProgressPercentage()}
                           className="h-2"
-                        />
+                        /> */}
                       </div>
                       <div>
                         <div className="flex justify-between items-center mb-2">

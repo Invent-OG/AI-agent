@@ -617,14 +617,14 @@ export function FuturisticDashboard() {
                         </span>
                         <span className="font-semibold">24.5%</span>
                       </div>
-                      <Progress value={24.5} className="h-2" />
+                      {/* <Progress value={Number(24.5)} className="h-2" /> */}
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
                           Registration to Payment
                         </span>
                         <span className="font-semibold">67.8%</span>
                       </div>
-                      <Progress value={67.8} className="h-2" />
+                      {/* <Progress value={Number(67.8)} className="h-2" /> */}
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
                           Overall Conversion
@@ -633,7 +633,7 @@ export function FuturisticDashboard() {
                           16.6%
                         </span>
                       </div>
-                      <Progress value={16.6} className="h-2" />
+                      {/* <Progress value={Number(16.6)} className="h-2" /> */}
                     </div>
                   </CardContent>
                 </Card>
@@ -709,7 +709,7 @@ export function FuturisticDashboard() {
                             ₹45,000 / ₹50,000
                           </span>
                         </div>
-                        <Progress value={90} className="h-2" />
+                        {/* <Progress value={Number(90)} className="h-2" /> */}
                       </div>
                       <div>
                         <div className="flex justify-between items-center mb-2">
@@ -720,7 +720,7 @@ export function FuturisticDashboard() {
                             180 / 200
                           </span>
                         </div>
-                        <Progress value={90} className="h-2" />
+                        {/* <Progress value={Number(90)} className="h-2" /> */}
                       </div>
                       <div>
                         <div className="flex justify-between items-center mb-2">
@@ -731,7 +731,7 @@ export function FuturisticDashboard() {
                             15% / 20%
                           </span>
                         </div>
-                        <Progress value={75} className="h-2" />
+                        {/* <Progress value={Number(75)} className="h-2" /> */}
                       </div>
                     </div>
                   </CardContent>

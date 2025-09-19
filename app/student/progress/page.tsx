@@ -117,7 +117,10 @@ export default function StudentProgressPage() {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Overall Progress
               </p>
-              <Progress value={overallProgress} className="mt-3 h-2" />{" "}
+              {/* <Progress
+                value={Number(overallProgress) || 0}
+                className="mt-3 h-2"
+              />{" "} */}
             </CardContent>
           </Card>
 
