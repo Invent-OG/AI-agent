@@ -259,7 +259,7 @@ export default function StudentDashboard() {
                       {progress}% Complete
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Keep going! You're doing great.
+                      Keep going! You&apos;re doing great.
                     </p>
                   </div>
                 </CardContent>
@@ -581,8 +581,8 @@ export default function StudentDashboard() {
                           Successfully Registered!
                         </h3>
                         <p className="text-gray-600 dark:text-gray-400 mb-4">
-                          You're all set for the workshop. We'll send you a
-                          reminder before the event.
+                          You&apos;re all set for the workshop. We&apos;ll send
+                          you a reminder before the event.
                         </p>
                         <div className="space-y-2">
                           <Link href="/student/workshop">

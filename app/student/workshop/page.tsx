@@ -156,7 +156,7 @@ export default function StudentWorkshopPage() {
                   <CheckCircle className="w-10 h-10 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  You're Registered! 🎉
+                  You&apos;re Registered! 🎉
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
                   Get ready for an amazing automation learning experience
@@ -245,7 +245,7 @@ export default function StudentWorkshopPage() {
 
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                    What you'll learn:
+                    What you&apos;ll learn:
                   </p>
                   <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
                     <li>• Zapier automation fundamentals</li>

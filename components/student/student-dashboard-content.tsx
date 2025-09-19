@@ -259,7 +259,7 @@ export function StudentDashboardContent() {
                       Registered!
                     </h3>
                     <p className="text-gray-400 text-sm mb-4">
-                      You're all set for the workshop
+                      You&apos;re all set for the workshop
                     </p>
                     <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors">
                       Join Workshop
