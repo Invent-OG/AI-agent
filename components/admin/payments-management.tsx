@@ -244,7 +244,7 @@ export function PaymentsManagement() {
               Revenue Trend
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          {/* <CardContent>
             <div className="h-[300px]">
               <RechartsResponsiveContainer
                 {...({} as any)}
@@ -272,7 +272,7 @@ export function PaymentsManagement() {
                 </LineChart>
               </RechartsResponsiveContainer>
             </div>
-          </CardContent>
+          </CardContent> */}
         </Card>
 
         <Card className="bg-gray-900 border-gray-800">
@@ -283,7 +283,7 @@ export function PaymentsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            {/* <div className="h-[300px]">
               <RechartsResponsiveContainer
                 {...({} as any)}
                 width="100%"
@@ -319,7 +319,7 @@ export function PaymentsManagement() {
                   />
                 </PieChart>
               </RechartsResponsiveContainer>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>

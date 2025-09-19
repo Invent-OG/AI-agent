@@ -249,7 +249,7 @@ export function ReportsManagement() {
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
+                  {/* <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={reports.growthData || []}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="date" stroke="#9CA3AF" />
@@ -279,7 +279,7 @@ export function ReportsManagement() {
                         fillOpacity={0.6}
                       />
                     </AreaChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer> */}
                 </div>
               </CardContent>
             </Card>
@@ -303,7 +303,7 @@ export function ReportsManagement() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px]">
+                {/* <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -341,7 +341,7 @@ export function ReportsManagement() {
                       />
                     </PieChart>
                   </ResponsiveContainer>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
           </div>
@@ -404,7 +404,7 @@ export function ReportsManagement() {
               </CardHeader>
               <CardContent>
                 <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
+                  {/* <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={reports.revenueData || []}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="date" stroke="#9CA3AF" />
@@ -424,7 +424,7 @@ export function ReportsManagement() {
                         strokeWidth={3}
                       />
                     </LineChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer> */}
                 </div>
               </CardContent>
             </Card>
@@ -437,7 +437,7 @@ export function ReportsManagement() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[400px]">
+                {/* <div className="h-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={reports.revenueByPlan || []}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -454,7 +454,7 @@ export function ReportsManagement() {
                       <Bar dataKey="revenue" fill="#3B82F6" />
                     </BarChart>
                   </ResponsiveContainer>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
           </div>
@@ -471,7 +471,7 @@ export function ReportsManagement() {
               </CardHeader>
               <CardContent>
                 <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
+                  {/* <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={reports.leadsData || []}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="date" stroke="#9CA3AF" />
@@ -492,7 +492,7 @@ export function ReportsManagement() {
                         fillOpacity={0.6}
                       />
                     </AreaChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer> */}
                 </div>
               </CardContent>
             </Card>
