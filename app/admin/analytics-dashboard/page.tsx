@@ -49,72 +49,72 @@ import { format } from "date-fns";
 
 // Dynamic imports for recharts components to avoid SSR issues
 const ResponsiveContainer = dynamic(
-  () => import("recharts").then((mod) => mod.ResponsiveContainer),
+  async () => (await import("recharts")).ResponsiveContainer,
   { ssr: false }
 );
 
 const LineChart = dynamic(
-  () => import("recharts").then((mod) => mod.LineChart),
+  async () => (await import("recharts")).LineChart,
   { ssr: false }
 );
 
 const Line = dynamic(
-  () => import("recharts").then((mod) => mod.Line),
+  async () => (await import("recharts")).Line,
   { ssr: false }
 );
 
 const XAxis = dynamic(
-  () => import("recharts").then((mod) => mod.XAxis),
+  async () => (await import("recharts")).XAxis,
   { ssr: false }
 );
 
 const YAxis = dynamic(
-  () => import("recharts").then((mod) => mod.YAxis),
+  async () => (await import("recharts")).YAxis,
   { ssr: false }
 );
 
 const CartesianGrid = dynamic(
-  () => import("recharts").then((mod) => mod.CartesianGrid),
+  async () => (await import("recharts")).CartesianGrid,
   { ssr: false }
 );
 
 const Tooltip = dynamic(
-  () => import("recharts").then((mod) => mod.Tooltip),
+  async () => (await import("recharts")).Tooltip,
   { ssr: false }
 );
 
 const BarChart = dynamic(
-  () => import("recharts").then((mod) => mod.BarChart),
+  async () => (await import("recharts")).BarChart,
   { ssr: false }
 );
 
 const Bar = dynamic(
-  () => import("recharts").then((mod) => mod.Bar),
+  async () => (await import("recharts")).Bar,
   { ssr: false }
 );
 
 const PieChart = dynamic(
-  () => import("recharts").then((mod) => mod.PieChart),
+  async () => (await import("recharts")).PieChart,
   { ssr: false }
 );
 
 const Pie = dynamic(
-  () => import("recharts").then((mod) => mod.Pie),
+  async () => (await import("recharts")).Pie,
   { ssr: false }
 );
 
 const Cell = dynamic(
-  () => import("recharts").then((mod) => mod.Cell),
+  async () => (await import("recharts")).Cell,
   { ssr: false }
 );
 
 const AreaChart = dynamic(
-  () => import("recharts").then((mod) => mod.AreaChart),
+  async () => (await import("recharts")).AreaChart,
   { ssr: false }
 );
 
 const Area = dynamic(
-  () => import("recharts").then((mod) => mod.Area),
+  async () => (await import("recharts")).Area,
   { ssr: false }
 );
 
