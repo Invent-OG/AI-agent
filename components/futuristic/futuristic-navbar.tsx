@@ -42,7 +42,7 @@ export function FuturisticNavbar() {
         ref={navRef}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`fixed w-full z-40 py-4 transition-all duration-300 ${
+        className={` w-full z-40 py-4 transition-all duration-300 ${
           isScrolled
             ? "bg-white/30 dark:bg-black/30 backdrop-blur-md shadow-lg border border-white/20 dark:border-gray-700/20"
             : "bg-transparent text-white"

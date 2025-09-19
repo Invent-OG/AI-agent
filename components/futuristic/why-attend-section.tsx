@@ -108,12 +108,10 @@ export function WhyAttendSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-20 relative  overflow-hidden">
-      {/* <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-900/10 to-transparent" /> */}
-
+    <section ref={sectionRef} className="py-20   bg-transparent">
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
-          <h2 className="section-title text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <h2 className="section-title text-4xl md:text-5xl font-bold mb-6 ">
             Why Attend This Workshop?
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
