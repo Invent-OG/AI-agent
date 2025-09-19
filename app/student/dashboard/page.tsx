@@ -428,8 +428,8 @@ export default function StudentDashboard() {
                           course.level === "beginner"
                             ? "secondary"
                             : course.level === "intermediate"
-                            ? "default"
-                            : "destructive"
+                              ? "default"
+                              : "destructive"
                         }
                       >
                         {course.level}
