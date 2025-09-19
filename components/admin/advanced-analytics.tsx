@@ -17,7 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, TrendingUp, Users, DollarSign } from "lucide-react";
-import { ReactElement } from "react";
+import { ReactElement, cloneElement } from "react";
 
 const COLORS = [
   "#3B82F6",
@@ -28,15 +28,19 @@ const COLORS = [
   "#6B7280",
 ];
 
-// Wrapper to fix TS issue with ResponsiveContainer
-const ResponsiveContainerWrapper: React.FC<{
+interface ResponsiveContainerWrapperProps {
   width?: string | number;
   height?: string | number;
-  children: ReactElement; // ✅ Must be a single React element
-}> = ({ width = "100%", height = "100%", children }) => {
+  children: ReactElement; // must be exactly one chart element
+}
+
+export const ResponsiveContainerWrapper: React.FC<
+  ResponsiveContainerWrapperProps
+> = ({ width = "100%", height = "100%", children }) => {
+  const childElement = cloneElement(children);
   return (
     <ResponsiveContainer width={width} height={height}>
-      {children}
+      {childElement}
     </ResponsiveContainer>
   );
 };
