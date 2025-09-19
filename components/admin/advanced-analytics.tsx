@@ -13,13 +13,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  FunnelChart,
-  Funnel,
-  LabelList,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, TrendingUp, Users, DollarSign } from "lucide-react";
+import { ReactElement } from "react";
 
 const COLORS = [
   "#3B82F6",
@@ -29,6 +27,19 @@ const COLORS = [
   "#EF4444",
   "#6B7280",
 ];
+
+// Wrapper to fix TS issue with ResponsiveContainer
+const ResponsiveContainerWrapper: React.FC<{
+  width?: string | number;
+  height?: string | number;
+  children: ReactElement; // ✅ Must be a single React element
+}> = ({ width = "100%", height = "100%", children }) => {
+  return (
+    <ResponsiveContainer width={width} height={height}>
+      {children}
+    </ResponsiveContainer>
+  );
+};
 
 export function AdvancedAnalytics() {
   const { data: analyticsData, isLoading } = useQuery({
@@ -77,6 +88,7 @@ export function AdvancedAnalytics() {
           <TabsTrigger value="revenue">Revenue Analysis</TabsTrigger>
         </TabsList>
 
+        {/* Geographic */}
         <TabsContent value="geographic" className="space-y-6">
           <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
             <CardHeader>
@@ -87,7 +99,7 @@ export function AdvancedAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainerWrapper>
                   <BarChart data={data.geographic || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="city" />
@@ -95,12 +107,13 @@ export function AdvancedAnalytics() {
                     <Tooltip />
                     <Bar dataKey="count" fill="#3B82F6" />
                   </BarChart>
-                </ResponsiveContainer>
+                </ResponsiveContainerWrapper>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Traffic Sources */}
         <TabsContent value="traffic" className="space-y-6">
           <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
             <CardHeader>
@@ -111,7 +124,7 @@ export function AdvancedAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainerWrapper>
                   <PieChart>
                     <Pie
                       data={data.trafficSources || []}
@@ -136,12 +149,13 @@ export function AdvancedAnalytics() {
                     </Pie>
                     <Tooltip />
                   </PieChart>
-                </ResponsiveContainer>
+                </ResponsiveContainerWrapper>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Conversion Funnel */}
         <TabsContent value="funnel" className="space-y-6">
           <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
             <CardHeader>
@@ -152,7 +166,7 @@ export function AdvancedAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainerWrapper>
                   <BarChart data={data.funnel || []} layout="horizontal">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
@@ -160,12 +174,13 @@ export function AdvancedAnalytics() {
                     <Tooltip />
                     <Bar dataKey="count" fill="#10B981" />
                   </BarChart>
-                </ResponsiveContainer>
+                </ResponsiveContainerWrapper>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Revenue */}
         <TabsContent value="revenue" className="space-y-6">
           <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
             <CardHeader>
@@ -176,7 +191,7 @@ export function AdvancedAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainerWrapper>
                   <BarChart data={data.revenueByPlan || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="plan" />
@@ -184,7 +199,7 @@ export function AdvancedAnalytics() {
                     <Tooltip formatter={(value) => [`₹${value}`, "Revenue"]} />
                     <Bar dataKey="revenue" fill="#F59E0B" />
                   </BarChart>
-                </ResponsiveContainer>
+                </ResponsiveContainerWrapper>
               </div>
             </CardContent>
           </Card>
