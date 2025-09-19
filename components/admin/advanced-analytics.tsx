@@ -1,23 +1,82 @@
 "use client";
 
-import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, TrendingUp, Users, DollarSign } from "lucide-react";
-import { ReactElement, cloneElement } from "react";
+import { motion } from "framer-motion";
+
+const ResponsiveContainer = dynamic(
+  () =>
+    import("recharts").then((mod) => mod.ResponsiveContainer) as Promise<
+      React.ComponentType<any>
+    >,
+  { ssr: false }
+);
+const BarChart = dynamic(
+  () =>
+    import("recharts").then((mod) => mod.BarChart) as Promise<
+      React.ComponentType<any>
+    >,
+  { ssr: false }
+);
+const Bar = dynamic(
+  () =>
+    import("recharts").then((mod) => mod.Bar) as Promise<
+      React.ComponentType<any>
+    >,
+  { ssr: false }
+);
+const XAxis = dynamic(
+  () =>
+    import("recharts").then((mod) => mod.XAxis) as Promise<
+      React.ComponentType<any>
+    >,
+  { ssr: false }
+);
+const YAxis = dynamic(
+  () =>
+    import("recharts").then((mod) => mod.YAxis) as Promise<
+      React.ComponentType<any>
+    >,
+  { ssr: false }
+);
+const CartesianGrid = dynamic(
+  () =>
+    import("recharts").then((mod) => mod.CartesianGrid) as Promise<
+      React.ComponentType<any>
+    >,
+  { ssr: false }
+);
+const Tooltip = dynamic(
+  () =>
+    import("recharts").then((mod) => mod.Tooltip) as Promise<
+      React.ComponentType<any>
+    >,
+  { ssr: false }
+);
+const PieChart = dynamic(
+  () =>
+    import("recharts").then((mod) => mod.PieChart) as Promise<
+      React.ComponentType<any>
+    >,
+  { ssr: false }
+);
+const Pie = dynamic(
+  () =>
+    import("recharts").then((mod) => mod.Pie) as Promise<
+      React.ComponentType<any>
+    >,
+  { ssr: false }
+);
+const Cell = dynamic(
+  () =>
+    import("recharts").then((mod) => mod.Cell) as Promise<
+      React.ComponentType<any>
+    >,
+  { ssr: false }
+);
 
 const COLORS = [
   "#3B82F6",
@@ -27,23 +86,6 @@ const COLORS = [
   "#EF4444",
   "#6B7280",
 ];
-
-interface ResponsiveContainerWrapperProps {
-  width?: string | number;
-  height?: string | number;
-  children: ReactElement; // must be exactly one chart element
-}
-
-export const ResponsiveContainerWrapper: React.FC<
-  ResponsiveContainerWrapperProps
-> = ({ width = "100%", height = "100%", children }) => {
-  const childElement = cloneElement(children);
-  return (
-    <ResponsiveContainer width={width} height={height}>
-      {childElement}
-    </ResponsiveContainer>
-  );
-};
 
 export function AdvancedAnalytics() {
   const { data: analyticsData, isLoading } = useQuery({
@@ -103,7 +145,7 @@ export function AdvancedAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="h-[400px]">
-                <ResponsiveContainerWrapper>
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.geographic || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="city" />
@@ -111,7 +153,7 @@ export function AdvancedAnalytics() {
                     <Tooltip />
                     <Bar dataKey="count" fill="#3B82F6" />
                   </BarChart>
-                </ResponsiveContainerWrapper>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
@@ -128,16 +170,20 @@ export function AdvancedAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="h-[400px]">
-                <ResponsiveContainerWrapper>
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={data.trafficSources || []}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) =>
-                        `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
-                      }
+                      label={({
+                        name,
+                        percent,
+                      }: {
+                        name: string;
+                        percent: number | undefined;
+                      }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                       outerRadius={120}
                       fill="#8884d8"
                       dataKey="count"
@@ -153,7 +199,7 @@ export function AdvancedAnalytics() {
                     </Pie>
                     <Tooltip />
                   </PieChart>
-                </ResponsiveContainerWrapper>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
@@ -170,7 +216,7 @@ export function AdvancedAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="h-[400px]">
-                <ResponsiveContainerWrapper>
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.funnel || []} layout="horizontal">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
@@ -178,7 +224,7 @@ export function AdvancedAnalytics() {
                     <Tooltip />
                     <Bar dataKey="count" fill="#10B981" />
                   </BarChart>
-                </ResponsiveContainerWrapper>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
@@ -195,15 +241,20 @@ export function AdvancedAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="h-[400px]">
-                <ResponsiveContainerWrapper>
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.revenueByPlan || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="plan" />
                     <YAxis />
-                    <Tooltip formatter={(value) => [`₹${value}`, "Revenue"]} />
+                    <Tooltip
+                      formatter={(value: number | string | undefined) => [
+                        `₹${value}`,
+                        "Revenue",
+                      ]}
+                    />
                     <Bar dataKey="revenue" fill="#F59E0B" />
                   </BarChart>
-                </ResponsiveContainerWrapper>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
