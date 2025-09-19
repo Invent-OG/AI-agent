@@ -1,7 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
 interface ReportData {
   totalRevenue?: number;
   newLeads?: number;
@@ -48,8 +46,13 @@ import Link from "next/link";
 import { format } from "date-fns";
 
 // Dynamic imports for recharts components to avoid SSR issues
+import dynamic from "next/dynamic";
+
 const ResponsiveContainer = dynamic(
-  async () => ({ default: (await import("recharts")).ResponsiveContainer }),
+  () =>
+    import("recharts").then((mod) => mod.ResponsiveContainer) as Promise<
+      React.ComponentType<any>
+    >,
   { ssr: false }
 );
 
@@ -88,20 +91,18 @@ const BarChart = dynamic(
   { ssr: false }
 );
 
-const Bar = dynamic(
-  async () => ({ default: (await import("recharts")).Bar }),
-  { ssr: false }
-);
+const Bar = dynamic(async () => ({ default: (await import("recharts")).Bar }), {
+  ssr: false,
+});
 
 const PieChart = dynamic(
   async () => ({ default: (await import("recharts")).PieChart }),
   { ssr: false }
 );
 
-const Pie = dynamic(
-  async () => ({ default: (await import("recharts")).Pie }),
-  { ssr: false }
-);
+const Pie = dynamic(async () => ({ default: (await import("recharts")).Pie }), {
+  ssr: false,
+});
 
 const Cell = dynamic(
   async () => ({ default: (await import("recharts")).Cell }),
