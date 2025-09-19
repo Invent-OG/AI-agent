@@ -49,72 +49,72 @@ import { format } from "date-fns";
 
 // Dynamic imports for recharts components to avoid SSR issues
 const ResponsiveContainer = dynamic(
-  async () => (await import("recharts")).ResponsiveContainer,
+  async () => ({ default: (await import("recharts")).ResponsiveContainer }),
   { ssr: false }
 );
 
 const LineChart = dynamic(
-  async () => (await import("recharts")).LineChart,
+  async () => ({ default: (await import("recharts")).LineChart }),
   { ssr: false }
 );
 
 const Line = dynamic(
-  async () => (await import("recharts")).Line,
+  async () => ({ default: (await import("recharts")).Line }),
   { ssr: false }
 );
 
 const XAxis = dynamic(
-  async () => (await import("recharts")).XAxis,
+  async () => ({ default: (await import("recharts")).XAxis }),
   { ssr: false }
 );
 
 const YAxis = dynamic(
-  async () => (await import("recharts")).YAxis,
+  async () => ({ default: (await import("recharts")).YAxis }),
   { ssr: false }
 );
 
 const CartesianGrid = dynamic(
-  async () => (await import("recharts")).CartesianGrid,
+  async () => ({ default: (await import("recharts")).CartesianGrid }),
   { ssr: false }
 );
 
 const Tooltip = dynamic(
-  async () => (await import("recharts")).Tooltip,
+  async () => ({ default: (await import("recharts")).Tooltip }),
   { ssr: false }
 );
 
 const BarChart = dynamic(
-  async () => (await import("recharts")).BarChart,
+  async () => ({ default: (await import("recharts")).BarChart }),
   { ssr: false }
 );
 
 const Bar = dynamic(
-  async () => (await import("recharts")).Bar,
+  async () => ({ default: (await import("recharts")).Bar }),
   { ssr: false }
 );
 
 const PieChart = dynamic(
-  async () => (await import("recharts")).PieChart,
+  async () => ({ default: (await import("recharts")).PieChart }),
   { ssr: false }
 );
 
 const Pie = dynamic(
-  async () => (await import("recharts")).Pie,
+  async () => ({ default: (await import("recharts")).Pie }),
   { ssr: false }
 );
 
 const Cell = dynamic(
-  async () => (await import("recharts")).Cell,
+  async () => ({ default: (await import("recharts")).Cell }),
   { ssr: false }
 );
 
 const AreaChart = dynamic(
-  async () => (await import("recharts")).AreaChart,
+  async () => ({ default: (await import("recharts")).AreaChart }),
   { ssr: false }
 );
 
 const Area = dynamic(
-  async () => (await import("recharts")).Area,
+  async () => ({ default: (await import("recharts")).Area }),
   { ssr: false }
 );
 
