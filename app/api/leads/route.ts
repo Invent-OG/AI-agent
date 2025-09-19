@@ -60,16 +60,16 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(leads.source, source as any));
     }
 
-    let query = db
+    let query: any = db
       .select()
       .from(leads)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(leads.createdAt));
-    
+
     if (limit) {
       query = query.limit(parseInt(limit));
     }
-    
+
     const allLeads = await query;
 
     return NextResponse.json({ success: true, leads: allLeads });

@@ -1,5 +1,22 @@
 "use client";
 
+interface ReportData {
+  totalRevenue?: number;
+  newLeads?: number;
+  conversionRate?: number;
+  workshopAttendance?: number;
+  growthData?: { date: string; leads: number; revenue: number }[];
+  conversionFunnel?: { name: string; count: number; percentage: number }[];
+  revenueData?: { date: string; amount: number }[];
+}
+
+interface AdvancedData {
+  trafficSources?: { name: string; count: number }[];
+  funnel?: { stage: string; count: number }[];
+  revenueByPlan?: { plan: string; revenue: number }[];
+  geographic?: { city: string; country: string; count: number }[];
+}
+
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { motion } from "framer-motion";
@@ -44,7 +61,14 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 
-const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"];
+const COLORS = [
+  "#3B82F6",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#8B5CF6",
+  "#EC4899",
+];
 
 export default function AnalyticsDashboardPage() {
   return (
@@ -57,17 +81,19 @@ export default function AnalyticsDashboardPage() {
 }
 
 function AnalyticsDashboardContent() {
-  const { data: reportsData, isLoading } = useQuery({
+  const { data: reportsData, isLoading } = useQuery<{ data: ReportData }>({
     queryKey: ["analytics-dashboard"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/reports?range=30d&type=overview");
+      const response = await fetch(
+        "/api/admin/reports?range=30d&type=overview"
+      );
       if (!response.ok) throw new Error("Failed to fetch analytics");
       return response.json();
     },
     refetchInterval: 60000,
   });
 
-  const { data: advancedData } = useQuery({
+  const { data: advancedData } = useQuery<{ data: AdvancedData }>({
     queryKey: ["advanced-analytics"],
     queryFn: async () => {
       const response = await fetch("/api/analytics/dashboard");
@@ -91,8 +117,12 @@ function AnalyticsDashboardContent() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-white">Analytics Dashboard</h1>
-            <p className="text-gray-400">Comprehensive business insights and metrics</p>
+            <h1 className="text-3xl font-bold text-white">
+              Analytics Dashboard
+            </h1>
+            <p className="text-gray-400">
+              Comprehensive business insights and metrics
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -129,7 +159,9 @@ function AnalyticsDashboardContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">New Leads</p>
-                <p className="text-2xl font-bold text-blue-400">{reports.newLeads || 0}</p>
+                <p className="text-2xl font-bold text-blue-400">
+                  {reports.newLeads || 0}
+                </p>
                 <p className="text-xs text-blue-400">+8% from last month</p>
               </div>
               <Users className="w-8 h-8 text-blue-400 opacity-60" />
@@ -142,7 +174,9 @@ function AnalyticsDashboardContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Conversion Rate</p>
-                <p className="text-2xl font-bold text-purple-400">{reports.conversionRate || 0}%</p>
+                <p className="text-2xl font-bold text-purple-400">
+                  {reports.conversionRate || 0}%
+                </p>
                 <p className="text-xs text-purple-400">+3% from last month</p>
               </div>
               <Target className="w-8 h-8 text-purple-400 opacity-60" />
@@ -155,7 +189,9 @@ function AnalyticsDashboardContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Workshop Attendance</p>
-                <p className="text-2xl font-bold text-orange-400">{reports.workshopAttendance || 0}</p>
+                <p className="text-2xl font-bold text-orange-400">
+                  {reports.workshopAttendance || 0}
+                </p>
                 <p className="text-xs text-orange-400">+15% from last month</p>
               </div>
               <Activity className="w-8 h-8 text-orange-400 opacity-60" />
@@ -166,19 +202,34 @@ function AnalyticsDashboardContent() {
 
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-5 bg-gray-900 border-gray-800">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger
+            value="overview"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
             Overview
           </TabsTrigger>
-          <TabsTrigger value="traffic" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger
+            value="traffic"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
             Traffic
           </TabsTrigger>
-          <TabsTrigger value="conversion" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger
+            value="conversion"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
             Conversion
           </TabsTrigger>
-          <TabsTrigger value="revenue" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger
+            value="revenue"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
             Revenue
           </TabsTrigger>
-          <TabsTrigger value="geographic" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger
+            value="geographic"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
             Geographic
           </TabsTrigger>
         </TabsList>
@@ -238,23 +289,34 @@ function AnalyticsDashboardContent() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {(reports.conversionFunnel || []).map((stage: any, index: number) => (
-                    <div key={stage.name} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-300">{stage.name}</span>
-                        <span className="text-white font-bold">{stage.count}</span>
+                  {(reports.conversionFunnel || []).map(
+                    (
+                      stage: {
+                        name: string;
+                        count: number;
+                        percentage: number;
+                      },
+                      index: number
+                    ) => (
+                      <div key={stage.name} className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">{stage.name}</span>
+                          <span className="text-white font-bold">
+                            {stage.count}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-700 rounded-full h-3">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500"
+                            style={{ width: `${stage.percentage}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-400 text-right">
+                          {stage.percentage}% conversion
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-700 rounded-full h-3">
-                        <div
-                          className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500"
-                          style={{ width: `${stage.percentage}%` }}
-                        />
-                      </div>
-                      <div className="text-xs text-gray-400 text-right">
-                        {stage.percentage}% conversion
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -279,14 +341,24 @@ function AnalyticsDashboardContent() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) =>
+                          `${name} ${percent !== undefined ? (percent * 100).toFixed(0) : 0}%`
+                        }
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="count"
                       >
-                        {(advanced.trafficSources || []).map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
+                        {(advanced.trafficSources || []).map(
+                          (
+                            entry: { name: string; count: number },
+                            index: number
+                          ) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          )
+                        )}
                       </Pie>
                       <Tooltip
                         contentStyle={{
@@ -393,7 +465,12 @@ function AnalyticsDashboardContent() {
                           color: "#F3F4F6",
                         }}
                       />
-                      <Line type="monotone" dataKey="amount" stroke="#10B981" strokeWidth={3} />
+                      <Line
+                        type="monotone"
+                        dataKey="amount"
+                        stroke="#10B981"
+                        strokeWidth={3}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -416,14 +493,24 @@ function AnalyticsDashboardContent() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ plan, percent }) => `${plan} ${(percent * 100).toFixed(0)}%`}
+                        label={({ plan, percent }) =>
+                          `${plan} ${percent !== undefined ? (percent * 100).toFixed(0) : 0}%`
+                        }
                         outerRadius={120}
                         fill="#8884d8"
                         dataKey="revenue"
                       >
-                        {(advanced.revenueByPlan || []).map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
+                        {(advanced.revenueByPlan || []).map(
+                          (
+                            entry: { plan: string; revenue: number },
+                            index: number
+                          ) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          )
+                        )}
                       </Pie>
                       <Tooltip
                         contentStyle={{
@@ -481,17 +568,33 @@ function AnalyticsDashboardContent() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {(advanced.geographic || []).slice(0, 10).map((location: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                      <div>
-                        <p className="text-white font-medium">{location.city}</p>
-                        <p className="text-gray-400 text-sm">{location.country}</p>
+                  {(advanced.geographic || []).slice(0, 10).map(
+                    (
+                      location: {
+                        city: string;
+                        country: string;
+                        count: number;
+                      },
+                      index: number
+                    ) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-gray-800 rounded-lg"
+                      >
+                        <div>
+                          <p className="text-white font-medium">
+                            {location.city}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            {location.country}
+                          </p>
+                        </div>
+                        <Badge className="bg-blue-100 text-blue-800">
+                          {location.count} visits
+                        </Badge>
                       </div>
-                      <Badge className="bg-blue-100 text-blue-800">
-                        {location.count} visits
-                      </Badge>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               </CardContent>
             </Card>

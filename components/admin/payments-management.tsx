@@ -57,7 +57,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444"];
 
 export function PaymentsManagement() {
   const { toast } = useToast();
@@ -72,7 +72,7 @@ export function PaymentsManagement() {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.append("status", statusFilter);
       if (planFilter !== "all") params.append("plan", planFilter);
-      
+
       const response = await fetch(`/api/admin/payments?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch payments");
       return response.json();
@@ -107,7 +107,7 @@ export function PaymentsManagement() {
   const revenue = revenueData?.data || {};
 
   const filteredPayments = payments.filter((payment: any) => {
-    const matchesSearch = 
+    const matchesSearch =
       payment.leadName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.leadEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.cashfreeOrderId?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -116,11 +116,24 @@ export function PaymentsManagement() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { icon: Clock, color: "bg-yellow-100 text-yellow-800", label: "Pending" },
-      success: { icon: CheckCircle, color: "bg-green-100 text-green-800", label: "Success" },
-      failed: { icon: XCircle, color: "bg-red-100 text-red-800", label: "Failed" },
+      pending: {
+        icon: Clock,
+        color: "bg-yellow-100 text-yellow-800",
+        label: "Pending",
+      },
+      success: {
+        icon: CheckCircle,
+        color: "bg-green-100 text-green-800",
+        label: "Success",
+      },
+      failed: {
+        icon: XCircle,
+        color: "bg-red-100 text-red-800",
+        label: "Failed",
+      },
     };
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const config =
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     const Icon = config.icon;
     return (
       <Badge className={config.color}>
@@ -137,8 +150,13 @@ export function PaymentsManagement() {
       business: { color: "bg-orange-100 text-orange-800", label: "Business" },
       workshop: { color: "bg-green-100 text-green-800", label: "Workshop" },
     };
-    const config = planConfig[plan as keyof typeof planConfig] || planConfig.starter;
-    return <Badge variant="outline" className={config.color}>{config.label}</Badge>;
+    const config =
+      planConfig[plan as keyof typeof planConfig] || planConfig.starter;
+    return (
+      <Badge variant="outline" className={config.color}>
+        {config.label}
+      </Badge>
+    );
   };
 
   return (
@@ -147,13 +165,17 @@ export function PaymentsManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Payments Management</h1>
-          <p className="text-gray-400">Track and manage all payment transactions</p>
+          <p className="text-gray-400">
+            Track and manage all payment transactions
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-payments"] })}
+            onClick={() =>
+              queryClient.invalidateQueries({ queryKey: ["admin-payments"] })
+            }
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
@@ -229,15 +251,20 @@ export function PaymentsManagement() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="date" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1F2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#F3F4F6'
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1F2937",
+                      border: "1px solid #374151",
+                      borderRadius: "8px",
+                      color: "#F3F4F6",
                     }}
                   />
-                  <Line type="monotone" dataKey="amount" stroke="#3B82F6" strokeWidth={2} />
+                  <Line
+                    type="monotone"
+                    dataKey="amount"
+                    stroke="#3B82F6"
+                    strokeWidth={2}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -260,21 +287,26 @@ export function PaymentsManagement() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) =>
+                      `${name} ${percent !== undefined ? (percent * 100).toFixed(0) : 0}%`
+                    }
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
                   >
                     {(revenue.byPlan || []).map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1F2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#F3F4F6'
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1F2937",
+                      border: "1px solid #374151",
+                      borderRadius: "8px",
+                      color: "#F3F4F6",
                     }}
                   />
                 </PieChart>
@@ -297,7 +329,7 @@ export function PaymentsManagement() {
                 className="pl-10 bg-gray-800 border-gray-700 text-white"
               />
             </div>
-            
+
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-48 bg-gray-800 border-gray-700 text-white">
                 <SelectValue placeholder="Filter by status" />
@@ -355,14 +387,21 @@ export function PaymentsManagement() {
                 </TableHeader>
                 <TableBody>
                   {filteredPayments.map((payment: any) => (
-                    <TableRow key={payment.id} className="border-gray-800 hover:bg-gray-800/50">
+                    <TableRow
+                      key={payment.id}
+                      className="border-gray-800 hover:bg-gray-800/50"
+                    >
                       <TableCell className="font-mono text-white">
                         {payment.cashfreeOrderId || payment.id.slice(0, 8)}
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium text-white">{payment.leadName}</p>
-                          <p className="text-sm text-gray-400">{payment.leadEmail}</p>
+                          <p className="font-medium text-white">
+                            {payment.leadName}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            {payment.leadEmail}
+                          </p>
                         </div>
                       </TableCell>
                       <TableCell>{getPlanBadge(payment.plan)}</TableCell>
@@ -371,17 +410,24 @@ export function PaymentsManagement() {
                       </TableCell>
                       <TableCell>{getStatusBadge(payment.status)}</TableCell>
                       <TableCell className="text-gray-300">
-                        {format(new Date(payment.createdAt), 'MMM dd, yyyy HH:mm')}
+                        {format(
+                          new Date(payment.createdAt),
+                          "MMM dd, yyyy HH:mm"
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-gray-400 hover:text-white"
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
                           {payment.status === "success" && (
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
+                            <Button
+                              size="sm"
+                              variant="ghost"
                               className="text-red-400 hover:text-red-300"
                               onClick={() => refundPayment.mutate(payment.id)}
                             >
@@ -394,11 +440,13 @@ export function PaymentsManagement() {
                   ))}
                 </TableBody>
               </Table>
-              
+
               {filteredPayments.length === 0 && (
                 <div className="text-center py-12 text-gray-400">
                   <CreditCard className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-semibold mb-2">No payments found</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    No payments found
+                  </h3>
                   <p>Try adjusting your search or filters</p>
                 </div>
               )}

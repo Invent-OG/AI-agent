@@ -16,10 +16,12 @@ import {
   CheckCircle,
   Star,
   ExternalLink,
+  BookOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { Label } from "@/components/ui/label";
 
 export default function StudentCertificatesPage() {
   const router = useRouter();
@@ -27,9 +29,11 @@ export default function StudentCertificatesPage() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/student/login');
+        router.push("/student/login");
       } else {
         setUser(user);
       }
@@ -39,10 +43,12 @@ export default function StudentCertificatesPage() {
   }, [router]);
 
   const { data: certificatesData, isLoading } = useQuery({
-    queryKey: ['student-certificates', user?.id],
+    queryKey: ["student-certificates", user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/student/certificates?userId=${user?.id}`);
-      if (!response.ok) throw new Error('Failed to fetch certificates');
+      const response = await fetch(
+        `/api/student/certificates?userId=${user?.id}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch certificates");
       return response.json();
     },
     enabled: !!user?.id,
@@ -81,7 +87,10 @@ export default function StudentCertificatesPage() {
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="border-purple-300 text-purple-600">
+            <Badge
+              variant="outline"
+              className="border-purple-300 text-purple-600"
+            >
               {certificates.length} Earned
             </Badge>
           </div>
@@ -93,7 +102,10 @@ export default function StudentCertificatesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
+              <Card
+                key={i}
+                className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg"
+              >
                 <CardContent className="p-6">
                   <div className="animate-pulse space-y-4">
                     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
@@ -137,24 +149,38 @@ export default function StudentCertificatesPage() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <Label className="text-gray-500 dark:text-gray-400">Student Name</Label>
-                          <p className="font-medium text-gray-900 dark:text-white">{certificate.studentName}</p>
+                          <Label className="text-gray-500 dark:text-gray-400">
+                            Student Name
+                          </Label>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {certificate.studentName}
+                          </p>
                         </div>
                         <div>
-                          <Label className="text-gray-500 dark:text-gray-400">Completion Date</Label>
+                          <Label className="text-gray-500 dark:text-gray-400">
+                            Completion Date
+                          </Label>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            {format(new Date(certificate.completionDate), 'MMM dd, yyyy')}
+                            {format(
+                              new Date(certificate.completionDate),
+                              "MMM dd, yyyy"
+                            )}
                           </p>
                         </div>
                       </div>
-                      
+
                       <div>
-                        <Label className="text-gray-500 dark:text-gray-400">Issued Date</Label>
+                        <Label className="text-gray-500 dark:text-gray-400">
+                          Issued Date
+                        </Label>
                         <p className="font-medium text-gray-900 dark:text-white">
-                          {format(new Date(certificate.issuedAt), 'MMMM dd, yyyy')}
+                          {format(
+                            new Date(certificate.issuedAt),
+                            "MMMM dd, yyyy"
+                          )}
                         </p>
                       </div>
-                      
+
                       <div className="flex gap-2 pt-2">
                         <Button className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
                           <Download className="w-4 h-4 mr-2" />
@@ -165,7 +191,7 @@ export default function StudentCertificatesPage() {
                           Share
                         </Button>
                       </div>
-                      
+
                       <Button variant="outline" className="w-full">
                         <ExternalLink className="w-4 h-4 mr-2" />
                         Share on LinkedIn
@@ -183,7 +209,8 @@ export default function StudentCertificatesPage() {
                   No certificates yet
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Complete courses to earn certificates and showcase your achievements
+                  Complete courses to earn certificates and showcase your
+                  achievements
                 </p>
                 <Link href="/student/courses">
                   <Button className="bg-gradient-to-r from-purple-500 to-pink-500">
@@ -209,20 +236,30 @@ export default function StudentCertificatesPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl">
                   <Award className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-purple-600">{certificates.length}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Certificates Earned</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {certificates.length}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Certificates Earned
+                  </p>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl">
                   <Calendar className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-blue-600">
-                    {certificates.length > 0 ? format(new Date(certificates[0].issuedAt), 'MMM yyyy') : '-'}
+                    {certificates.length > 0
+                      ? format(new Date(certificates[0].issuedAt), "MMM yyyy")
+                      : "-"}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">First Achievement</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    First Achievement
+                  </p>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl">
                   <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-green-600">100%</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Completion Rate</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Completion Rate
+                  </p>
                 </div>
               </div>
             </CardContent>
