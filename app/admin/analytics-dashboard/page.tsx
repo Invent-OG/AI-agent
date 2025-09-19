@@ -1,5 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 interface ReportData {
   totalRevenue?: number;
   newLeads?: number;
@@ -26,22 +28,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area,
-} from "recharts";
-import {
   BarChart3,
   TrendingUp,
   Users,
@@ -60,6 +46,77 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+
+// Dynamic imports for recharts components to avoid SSR issues
+const ResponsiveContainer = dynamic(
+  () => import("recharts").then((mod) => mod.ResponsiveContainer),
+  { ssr: false }
+);
+
+const LineChart = dynamic(
+  () => import("recharts").then((mod) => mod.LineChart),
+  { ssr: false }
+);
+
+const Line = dynamic(
+  () => import("recharts").then((mod) => mod.Line),
+  { ssr: false }
+);
+
+const XAxis = dynamic(
+  () => import("recharts").then((mod) => mod.XAxis),
+  { ssr: false }
+);
+
+const YAxis = dynamic(
+  () => import("recharts").then((mod) => mod.YAxis),
+  { ssr: false }
+);
+
+const CartesianGrid = dynamic(
+  () => import("recharts").then((mod) => mod.CartesianGrid),
+  { ssr: false }
+);
+
+const Tooltip = dynamic(
+  () => import("recharts").then((mod) => mod.Tooltip),
+  { ssr: false }
+);
+
+const BarChart = dynamic(
+  () => import("recharts").then((mod) => mod.BarChart),
+  { ssr: false }
+);
+
+const Bar = dynamic(
+  () => import("recharts").then((mod) => mod.Bar),
+  { ssr: false }
+);
+
+const PieChart = dynamic(
+  () => import("recharts").then((mod) => mod.PieChart),
+  { ssr: false }
+);
+
+const Pie = dynamic(
+  () => import("recharts").then((mod) => mod.Pie),
+  { ssr: false }
+);
+
+const Cell = dynamic(
+  () => import("recharts").then((mod) => mod.Cell),
+  { ssr: false }
+);
+
+const AreaChart = dynamic(
+  () => import("recharts").then((mod) => mod.AreaChart),
+  { ssr: false }
+);
+
+const Area = dynamic(
+  () => import("recharts").then((mod) => mod.Area),
+  { ssr: false }
+);
 
 const COLORS = [
   "#3B82F6",
