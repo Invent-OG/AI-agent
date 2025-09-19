@@ -32,9 +32,11 @@ export default function StudentProgressPage() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/student/login');
+        router.push("/student/login");
       } else {
         setUser(user);
       }
@@ -44,10 +46,10 @@ export default function StudentProgressPage() {
   }, [router]);
 
   const { data: progressData, isLoading } = useQuery({
-    queryKey: ['student-progress', user?.id],
+    queryKey: ["student-progress", user?.id],
     queryFn: async () => {
       const response = await fetch(`/api/student/progress?leadId=${user?.id}`);
-      if (!response.ok) throw new Error('Failed to fetch progress');
+      if (!response.ok) throw new Error("Failed to fetch progress");
       return response.json();
     },
     enabled: !!user?.id,
@@ -65,7 +67,8 @@ export default function StudentProgressPage() {
   const modules = progress.modules || [];
   const completedModules = modules.filter((m: any) => m.isCompleted).length;
   const totalModules = modules.length;
-  const overallProgress = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+  const overallProgress =
+    totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-blue-950/30 dark:to-indigo-950/30">
@@ -90,7 +93,10 @@ export default function StudentProgressPage() {
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="border-green-300 text-green-600">
+            <Badge
+              variant="outline"
+              className="border-green-300 text-green-600"
+            >
               {overallProgress}% Complete
             </Badge>
           </div>
@@ -105,41 +111,56 @@ export default function StudentProgressPage() {
               <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full w-fit mx-auto mb-4">
                 <Target className="w-6 h-6 text-green-600" />
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{overallProgress}%</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Overall Progress</p>
-              <Progress value={overallProgress} className="mt-3 h-2" />
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {overallProgress}%
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Overall Progress
+              </p>
+              <Progress value={overallProgress} className="mt-3 h-2" />{" "}
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
             <CardContent className="p-6 text-center">
               <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full w-fit mx-auto mb-4">
                 <BookOpen className="w-6 h-6 text-blue-600" />
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{completedModules}/{totalModules}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Modules Completed</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {completedModules}/{totalModules}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Modules Completed
+              </p>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
             <CardContent className="p-6 text-center">
               <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full w-fit mx-auto mb-4">
                 <Clock className="w-6 h-6 text-purple-600" />
               </div>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {Math.floor((progress.totalWatchTime || 0) / 3600)}h {Math.floor(((progress.totalWatchTime || 0) % 3600) / 60)}m
+                {Math.floor((progress.totalWatchTime || 0) / 3600)}h{" "}
+                {Math.floor(((progress.totalWatchTime || 0) % 3600) / 60)}m
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Study Time</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Total Study Time
+              </p>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
             <CardContent className="p-6 text-center">
               <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full w-fit mx-auto mb-4">
                 <TrendingUp className="w-6 h-6 text-orange-600" />
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{progress.streak || 0}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Day Streak</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {progress.streak || 0}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Day Streak
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -174,11 +195,13 @@ export default function StudentProgressPage() {
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          module.isCompleted 
-                            ? 'bg-green-100 dark:bg-green-900/30' 
-                            : 'bg-gray-200 dark:bg-gray-700'
-                        }`}>
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            module.isCompleted
+                              ? "bg-green-100 dark:bg-green-900/30"
+                              : "bg-gray-200 dark:bg-gray-700"
+                          }`}
+                        >
                           {module.isCompleted ? (
                             <CheckCircle className="w-5 h-5 text-green-600" />
                           ) : (
@@ -197,7 +220,9 @@ export default function StudentProgressPage() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Badge variant={module.isCompleted ? "default" : "secondary"}>
+                        <Badge
+                          variant={module.isCompleted ? "default" : "secondary"}
+                        >
                           {module.isCompleted ? "Completed" : "In Progress"}
                         </Badge>
                         <Button size="sm" variant="outline">
@@ -215,7 +240,7 @@ export default function StudentProgressPage() {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div className="flex items-center text-gray-600 dark:text-gray-400">
                         <Clock className="w-4 h-4 mr-2" />
@@ -223,12 +248,18 @@ export default function StudentProgressPage() {
                       </div>
                       <div className="flex items-center text-gray-600 dark:text-gray-400">
                         <Activity className="w-4 h-4 mr-2" />
-                        <span>Watch Time: {Math.floor((module.watchTime || 0) / 60)}m</span>
+                        <span>
+                          Watch Time: {Math.floor((module.watchTime || 0) / 60)}
+                          m
+                        </span>
                       </div>
                       {module.completedAt && (
                         <div className="flex items-center text-gray-600 dark:text-gray-400">
                           <Calendar className="w-4 h-4 mr-2" />
-                          <span>Completed: {format(new Date(module.completedAt), 'MMM dd')}</span>
+                          <span>
+                            Completed:{" "}
+                            {format(new Date(module.completedAt), "MMM dd")}
+                          </span>
                         </div>
                       )}
                     </div>

@@ -450,10 +450,7 @@ export default function StudentDashboard() {
                             {course.progress || 0}%
                           </span>
                         </div>
-                        <Progress
-                          value={course.progress || 0}
-                          className="h-3"
-                        />
+                        <Progress value={course.progress} className="h-3" />
                       </div>
 
                       <div className="flex items-center justify-between">

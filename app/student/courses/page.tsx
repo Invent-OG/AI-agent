@@ -32,9 +32,11 @@ export default function StudentCoursesPage() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/student/login');
+        router.push("/student/login");
       } else {
         setUser(user);
       }
@@ -44,20 +46,20 @@ export default function StudentCoursesPage() {
   }, [router]);
 
   const { data: coursesData, isLoading } = useQuery({
-    queryKey: ['student-courses', user?.id],
+    queryKey: ["student-courses", user?.id],
     queryFn: async () => {
       const response = await fetch(`/api/student/courses?userId=${user?.id}`);
-      if (!response.ok) throw new Error('Failed to fetch courses');
+      if (!response.ok) throw new Error("Failed to fetch courses");
       return response.json();
     },
     enabled: !!user?.id,
   });
 
   const { data: progressData } = useQuery({
-    queryKey: ['student-progress', user?.id],
+    queryKey: ["student-progress", user?.id],
     queryFn: async () => {
       const response = await fetch(`/api/student/progress?leadId=${user?.id}`);
-      if (!response.ok) throw new Error('Failed to fetch progress');
+      if (!response.ok) throw new Error("Failed to fetch progress");
       return response.json();
     },
     enabled: !!user?.id,
@@ -98,10 +100,17 @@ export default function StudentCoursesPage() {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <Badge variant="outline" className="border-green-300 text-green-600">
-                {courses.filter((c: any) => c.progress === 100).length} Completed
+              <Badge
+                variant="outline"
+                className="border-green-300 text-green-600"
+              >
+                {courses.filter((c: any) => c.progress === 100).length}{" "}
+                Completed
               </Badge>
-              <Badge variant="outline" className="border-blue-300 text-blue-600">
+              <Badge
+                variant="outline"
+                className="border-blue-300 text-blue-600"
+              >
                 {courses.length} Total
               </Badge>
             </div>
@@ -117,11 +126,15 @@ export default function StudentCoursesPage() {
               <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full w-fit mx-auto mb-4">
                 <BookOpen className="w-6 h-6 text-blue-600" />
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{courses.length}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Courses</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {courses.length}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Total Courses
+              </p>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
             <CardContent className="p-6 text-center">
               <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full w-fit mx-auto mb-4">
@@ -130,10 +143,12 @@ export default function StudentCoursesPage() {
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {courses.filter((c: any) => c.progress === 100).length}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Completed
+              </p>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
             <CardContent className="p-6 text-center">
               <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full w-fit mx-auto mb-4">
@@ -142,10 +157,12 @@ export default function StudentCoursesPage() {
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {Math.floor((progress.totalWatchTime || 0) / 3600)}h
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Study Time</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Study Time
+              </p>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
             <CardContent className="p-6 text-center">
               <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full w-fit mx-auto mb-4">
@@ -154,7 +171,9 @@ export default function StudentCoursesPage() {
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {courses.filter((c: any) => c.progress === 100).length}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Certificates</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Certificates
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -163,7 +182,10 @@ export default function StudentCoursesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
+              <Card
+                key={i}
+                className="border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg"
+              >
                 <CardContent className="p-6">
                   <div className="animate-pulse space-y-4">
                     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
@@ -187,49 +209,72 @@ export default function StudentCoursesPage() {
                       <CardTitle className="text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {course.title}
                       </CardTitle>
-                      <Badge variant={
-                        course.level === 'beginner' ? 'secondary' : 
-                        course.level === 'intermediate' ? 'default' : 
-                        'destructive'
-                      }>
+                      <Badge
+                        variant={
+                          course.level === "beginner"
+                            ? "secondary"
+                            : course.level === "intermediate"
+                              ? "default"
+                              : "destructive"
+                        }
+                      >
                         {course.level}
                       </Badge>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400">{course.description}</p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {course.description}
+                    </p>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Progress</span>
-                          <span className="font-medium">{course.progress || 0}%</span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Progress
+                          </span>
+                          <span className="font-medium">
+                            {course.progress || 0}%
+                          </span>
                         </div>
-                        <Progress value={course.progress || 0} className="h-3" />
+                        <Progress
+                          value={course.progress}
+                          className="h-3"
+                        />{" "}
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <div className="text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-medium">{course.completedModules || 0}</span> / {course.totalModules || 0} modules
+                          <span className="font-medium">
+                            {course.completedModules || 0}
+                          </span>{" "}
+                          / {course.totalModules || 0} modules
                         </div>
                         <div className="flex items-center gap-2">
                           <Button size="sm" variant="outline">
                             <FileText className="w-4 h-4 mr-2" />
                             Resources
                           </Button>
-                          <Button size="sm" className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+                          <Button
+                            size="sm"
+                            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                          >
                             <Play className="w-4 h-4 mr-2" />
-                            {course.progress > 0 ? 'Continue' : 'Start'}
+                            {course.progress > 0 ? "Continue" : "Start"}
                           </Button>
                         </div>
                       </div>
-                      
+
                       {course.progress === 100 && (
                         <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
                           <div className="flex items-center text-green-600 dark:text-green-400 text-sm">
                             <CheckCircle className="w-4 h-4 mr-2" />
                             Course Completed
                           </div>
-                          <Button size="sm" variant="outline" className="border-green-300 text-green-600">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-green-300 text-green-600"
+                          >
                             <Download className="w-4 h-4 mr-2" />
                             Certificate
                           </Button>

@@ -132,10 +132,10 @@ export default function StudentCertificatesPage() {
                         </div>
                         <div>
                           <CardTitle className="text-lg group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                            {certificate.courseName}
+                            {certificate.courseName || "-"}
                           </CardTitle>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Certificate #{certificate.certificateNumber}
+                            Certificate #{certificate.certificateNumber || "-"}
                           </p>
                         </div>
                       </div>
@@ -153,7 +153,7 @@ export default function StudentCertificatesPage() {
                             Student Name
                           </Label>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            {certificate.studentName}
+                            {certificate.studentName || "-"}
                           </p>
                         </div>
                         <div>
@@ -161,10 +161,12 @@ export default function StudentCertificatesPage() {
                             Completion Date
                           </Label>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            {format(
-                              new Date(certificate.completionDate),
-                              "MMM dd, yyyy"
-                            )}
+                            {certificate.completionDate
+                              ? format(
+                                  new Date(certificate.completionDate),
+                                  "MMM dd, yyyy"
+                                )
+                              : "-"}
                           </p>
                         </div>
                       </div>
@@ -174,10 +176,12 @@ export default function StudentCertificatesPage() {
                           Issued Date
                         </Label>
                         <p className="font-medium text-gray-900 dark:text-white">
-                          {format(
-                            new Date(certificate.issuedAt),
-                            "MMMM dd, yyyy"
-                          )}
+                          {certificate.issuedAt
+                            ? format(
+                                new Date(certificate.issuedAt),
+                                "MMMM dd, yyyy"
+                              )
+                            : "-"}
                         </p>
                       </div>
 
@@ -246,7 +250,7 @@ export default function StudentCertificatesPage() {
                 <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl">
                   <Calendar className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-blue-600">
-                    {certificates.length > 0
+                    {certificates.length > 0 && certificates[0].issuedAt
                       ? format(new Date(certificates[0].issuedAt), "MMM yyyy")
                       : "-"}
                   </p>
