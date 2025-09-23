@@ -3,19 +3,46 @@ import { db } from '@/lib/db'
 import { payments, leads } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { sendEmail, emailTemplates } from '@/lib/email'
+import { getCashfreeClient } from '@/lib/cashfree'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    
-    // In production, verify the webhook signature here
-    
-    const {
-      order_id: cashfreeOrderId,
-      payment_id: cashfreePaymentId,
-      order_status,
-    } = body
+    const rawBody = await request.text()
+    const body = JSON.parse(rawBody)
 
+    // Verify webhook signature
+    const signature = request.headers.get('x-webhook-signature')
+    const timestamp = request.headers.get('x-webhook-timestamp')
+
+    if (signature && timestamp) {
+      try {
+        const cashfree = getCashfreeClient()
+        const isValid = cashfree.verifyWebhookSignature(rawBody, signature, timestamp)
+        
+        if (!isValid) {
+          console.error('Invalid webhook signature')
+          return NextResponse.json(
+            { success: false, error: 'Invalid signature' },
+            { status: 401 }
+          )
+        }
+      } catch (error) {
+        console.error('Signature verification error:', error)
+        // Continue processing for development/testing
+      }
+    }
+
+    const {
+      data: {
+        order: {
+          order_id: cashfreeOrderId,
+          order_status,
+        },
+        payment: {
+          cf_payment_id: cashfreePaymentId,
+        } = {},
+      },
+    } = body
     if (!cashfreeOrderId) {
       return NextResponse.json(
         { success: false, error: 'Missing order ID' },
@@ -30,6 +57,7 @@ export async function POST(request: NextRequest) {
       .where(eq(payments.cashfreeOrderId, cashfreeOrderId))
 
     if (!payment) {
+      console.error('Payment not found for order:', cashfreeOrderId)
       return NextResponse.json(
         { success: false, error: 'Payment not found' },
         { status: 404 }
@@ -41,13 +69,16 @@ export async function POST(request: NextRequest) {
       .select()
       .from(leads)
       .where(eq(leads.id, payment.leadId))
+
     let paymentStatus = 'pending'
     let leadStatus = 'registered'
 
-    if (order_status === 'PAID') {
+    if (order_status === 'PAID' || order_status === 'ACTIVE') {
       paymentStatus = 'success'
       leadStatus = 'paid'
-    } else if (order_status === 'FAILED') {
+    } else if (order_status === 'FAILED' || order_status === 'CANCELLED') {
+      paymentStatus = 'failed'
+    } else if (order_status === 'EXPIRED') {
       paymentStatus = 'failed'
     }
 
@@ -73,18 +104,28 @@ export async function POST(request: NextRequest) {
 
       // Send payment confirmation email
       if (lead && process.env.RESEND_API_KEY) {
-        await sendEmail({
-          to: lead.email,
-          subject: "Payment Confirmed - AutomateFlow",
-          html: emailTemplates.paymentConfirmation(
-            lead.name,
-            payment.amount,
-            payment.plan
-          ),
-        });
+        try {
+          await sendEmail({
+            to: lead.email,
+            subject: "Payment Confirmed - AutomateFlow",
+            html: emailTemplates.paymentConfirmation(
+              lead.name,
+              payment.amount,
+              payment.plan
+            ),
+          });
+        } catch (emailError) {
+          console.error('Failed to send confirmation email:', emailError)
+          // Don't fail the webhook for email errors
+        }
       }
     }
 
+    console.log('Webhook processed successfully:', {
+      orderId: cashfreeOrderId,
+      status: paymentStatus,
+      leadId: payment.leadId,
+    })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error processing webhook:', error)

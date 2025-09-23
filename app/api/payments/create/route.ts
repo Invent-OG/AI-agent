@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { payments, leads } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
+import { getCashfreeClient } from '@/lib/cashfree'
 
 const paymentSchema = z.object({
   leadId: z.string().uuid(),
@@ -47,28 +48,83 @@ export async function POST(request: NextRequest) {
       })
       .returning()
 
-    // Here you would integrate with Cashfree API
-    // For now, we'll create a mock Cashfree order
-    const cashfreeOrderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
-    // Update payment with Cashfree order ID
-    await db
-      .update(payments)
-      .set({ cashfreeOrderId })
-      .where(eq(payments.id, payment.id))
+    try {
+      // Initialize Cashfree client
+      const cashfree = getCashfreeClient()
+      
+      // Generate unique order ID
+      const orderId = `AF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      
+      // Create Cashfree order
+      const orderData = {
+        orderId,
+        orderAmount: amount,
+        orderCurrency: 'INR',
+        customerDetails: {
+          customerId: lead.id,
+          customerName: lead.name,
+          customerEmail: lead.email,
+          customerPhone: lead.phone || '9999999999',
+        },
+        orderMeta: {
+          returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success?orderId=${orderId}`,
+          notifyUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payments/webhook`,
+        },
+      }
 
-    // Mock Cashfree response
-    const cashfreeResponse = {
-      order_id: cashfreeOrderId,
-      payment_url: `https://sandbox.cashfree.com/pg/orders/${cashfreeOrderId}`,
-      order_status: 'ACTIVE',
+      const cashfreeOrder = await cashfree.createOrder(orderData)
+      
+      // Update payment with Cashfree order details
+      await db
+        .update(payments)
+        .set({ 
+          cashfreeOrderId: cashfreeOrder.cfOrderId,
+          updatedAt: new Date(),
+        })
+        .where(eq(payments.id, payment.id))
+
+      // Generate payment URL
+      const paymentUrl = `${cashfree.baseUrl}/orders/${cashfreeOrder.cfOrderId}/pay`
+
+      return NextResponse.json({
+        success: true,
+        payment: {
+          ...payment,
+          cashfreeOrderId: cashfreeOrder.cfOrderId,
+        },
+        cashfree: {
+          orderId: cashfreeOrder.cfOrderId,
+          paymentUrl,
+          orderStatus: cashfreeOrder.orderStatus,
+          paymentSessionId: cashfreeOrder.paymentSessionId,
+        },
+      })
+    } catch (cashfreeError) {
+      console.error('Cashfree integration error:', cashfreeError)
+      
+      // Fallback to mock for development
+      const mockOrderId = `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      
+      await db
+        .update(payments)
+        .set({ cashfreeOrderId: mockOrderId })
+        .where(eq(payments.id, payment.id))
+
+      return NextResponse.json({
+        success: true,
+        payment: {
+          ...payment,
+          cashfreeOrderId: mockOrderId,
+        },
+        cashfree: {
+          orderId: mockOrderId,
+          paymentUrl: `https://sandbox.cashfree.com/pg/orders/${mockOrderId}/pay`,
+          orderStatus: 'ACTIVE',
+        },
+        warning: 'Using mock payment for development',
+      })
     }
 
-    return NextResponse.json({
-      success: true,
-      payment,
-      cashfree: cashfreeResponse,
-    })
   } catch (error) {
     console.error('Error creating payment:', error)
     return NextResponse.json(

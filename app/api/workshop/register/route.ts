@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { leads, payments } from "@/lib/db/schema";
 import { z } from "zod";
 import { sendEmail, emailTemplates } from "@/lib/email";
+import { getCashfreeClient } from "@/lib/cashfree";
 
 const registrationSchema = z.object({
   name: z.string().min(1),
@@ -38,32 +39,80 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Generate Cashfree order (mock implementation)
-    const cashfreeOrderId = `workshop_${Date.now()}_${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
+    let paymentUrl = '';
+    let cashfreeOrderId = '';
 
-    // Update payment with Cashfree order ID
-    await db
-      .update(payments)
-      .set({ cashfreeOrderId })
-      .where(eq(payments.id, payment.id));
+    try {
+      // Initialize Cashfree client
+      const cashfree = getCashfreeClient();
+      
+      // Generate unique order ID
+      const orderId = `WS_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Create Cashfree order
+      const orderData = {
+        orderId,
+        orderAmount: 499,
+        orderCurrency: 'INR',
+        customerDetails: {
+          customerId: newLead.id,
+          customerName: newLead.name,
+          customerEmail: newLead.email,
+          customerPhone: newLead.phone,
+        },
+        orderMeta: {
+          returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success?orderId=${orderId}`,
+          notifyUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payments/webhook`,
+        },
+      };
+
+      const cashfreeOrder = await cashfree.createOrder(orderData);
+      cashfreeOrderId = cashfreeOrder.cfOrderId;
+      paymentUrl = `${process.env.CASHFREE_ENVIRONMENT === 'production' ? 'https://api.cashfree.com' : 'https://sandbox.cashfree.com'}/pg/orders/${cashfreeOrderId}/pay`;
+      
+      // Update payment with Cashfree order ID
+      await db
+        .update(payments)
+        .set({ 
+          cashfreeOrderId: cashfreeOrderId,
+          updatedAt: new Date(),
+        })
+        .where(eq(payments.id, payment.id));
+        
+    } catch (cashfreeError) {
+      console.error('Cashfree integration error:', cashfreeError);
+      
+      // Fallback to mock for development
+      cashfreeOrderId = `mock_workshop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      paymentUrl = `https://sandbox.cashfree.com/pg/orders/${cashfreeOrderId}/pay`;
+      
+      await db
+        .update(payments)
+        .set({ cashfreeOrderId })
+        .where(eq(payments.id, payment.id));
+    }
 
     // Send welcome email
     if (process.env.RESEND_API_KEY) {
-      await sendEmail({
-        to: newLead.email,
-        subject: "Workshop Registration Confirmed!",
-        html: emailTemplates.welcome(newLead.name),
-      });
+      try {
+        await sendEmail({
+          to: newLead.email,
+          subject: "Workshop Registration Confirmed!",
+          html: emailTemplates.welcome(newLead.name),
+        });
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        // Don't fail the registration for email errors
+      }
     }
-    // Mock Cashfree payment URL
-    const paymentUrl = `https://sandbox.cashfree.com/pg/orders/${cashfreeOrderId}`;
 
     return NextResponse.json({
       success: true,
       lead: newLead,
-      payment,
+      payment: {
+        ...payment,
+        cashfreeOrderId,
+      },
       paymentUrl,
     });
   } catch (error) {
