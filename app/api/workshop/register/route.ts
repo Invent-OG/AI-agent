@@ -39,53 +39,52 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    let paymentUrl = '';
-    let cashfreeOrderId = '';
+    let paymentUrl = "";
+    let cashfreeOrderId = "";
 
     try {
       // Initialize Cashfree client
       const cashfree = getCashfreeClient();
-      
+
       // Generate unique order ID
       const orderId = `WS_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       // Create Cashfree order
       const orderData = {
         orderId,
         orderAmount: 499,
-        orderCurrency: 'INR',
+        orderCurrency: "INR",
         customerDetails: {
           customerId: newLead.id,
           customerName: newLead.name,
           customerEmail: newLead.email,
-          customerPhone: newLead.phone,
+          customerPhone: newLead.phone ?? "",
         },
         orderMeta: {
-          returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success?orderId=${orderId}`,
-          notifyUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payments/webhook`,
+          returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/payment/success?orderId=${orderId}`,
+          notifyUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payments/webhook`,
         },
       };
 
       const cashfreeOrder = await cashfree.createOrder(orderData);
       cashfreeOrderId = cashfreeOrder.cfOrderId;
-      paymentUrl = `${process.env.CASHFREE_ENVIRONMENT === 'production' ? 'https://api.cashfree.com' : 'https://sandbox.cashfree.com'}/pg/orders/${cashfreeOrderId}/pay`;
-      
+      paymentUrl = `${process.env.CASHFREE_ENVIRONMENT === "production" ? "https://api.cashfree.com" : "https://sandbox.cashfree.com"}/pg/orders/${cashfreeOrderId}/pay`;
+
       // Update payment with Cashfree order ID
       await db
         .update(payments)
-        .set({ 
+        .set({
           cashfreeOrderId: cashfreeOrderId,
           updatedAt: new Date(),
         })
         .where(eq(payments.id, payment.id));
-        
     } catch (cashfreeError) {
-      console.error('Cashfree integration error:', cashfreeError);
-      
+      console.error("Cashfree integration error:", cashfreeError);
+
       // Fallback to mock for development
       cashfreeOrderId = `mock_workshop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       paymentUrl = `https://sandbox.cashfree.com/pg/orders/${cashfreeOrderId}/pay`;
-      
+
       await db
         .update(payments)
         .set({ cashfreeOrderId })
@@ -101,7 +100,7 @@ export async function POST(request: NextRequest) {
           html: emailTemplates.welcome(newLead.name),
         });
       } catch (emailError) {
-        console.error('Failed to send welcome email:', emailError);
+        console.error("Failed to send welcome email:", emailError);
         // Don't fail the registration for email errors
       }
     }
