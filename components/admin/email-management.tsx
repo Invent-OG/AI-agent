@@ -99,8 +99,10 @@ export function EmailManagement() {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.append("status", statusFilter);
       if (templateFilter !== "all") params.append("template", templateFilter);
-      
-      const response = await fetch(`/api/admin/email/campaigns?${params.toString()}`);
+
+      const response = await fetch(
+        `/api/admin/email/campaigns?${params.toString()}`
+      );
       if (!response.ok) throw new Error("Failed to fetch campaigns");
       return response.json();
     },
@@ -140,9 +142,9 @@ export function EmailManagement() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["email-campaigns"] });
-      toast({ 
-        title: "Campaign sent successfully", 
-        description: data.message 
+      toast({
+        title: "Campaign sent successfully",
+        description: data.message,
       });
       setShowCreateCampaign(false);
       resetCampaignForm();
@@ -257,7 +259,7 @@ export function EmailManagement() {
       });
       return;
     }
-    
+
     if (editingTemplate) {
       updateTemplate.mutate({ id: editingTemplate.id, data: templateForm });
     } else {
@@ -294,7 +296,7 @@ export function EmailManagement() {
   const analytics = analyticsData?.data || {};
 
   const filteredCampaigns = campaigns.filter((campaign: any) => {
-    const matchesSearch = 
+    const matchesSearch =
       campaign.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
       campaign.name.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
@@ -307,7 +309,8 @@ export function EmailManagement() {
       sent: { color: "bg-green-100 text-green-800", label: "Sent" },
       failed: { color: "bg-red-100 text-red-800", label: "Failed" },
     };
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
+    const config =
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
@@ -337,7 +340,9 @@ export function EmailManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Total Sent</p>
-                <p className="text-2xl font-bold text-blue-400">{stats.totalSent || 0}</p>
+                <p className="text-2xl font-bold text-blue-400">
+                  {stats.totalSent || 0}
+                </p>
               </div>
               <Mail className="w-8 h-8 text-blue-400 opacity-60" />
             </div>
@@ -349,7 +354,9 @@ export function EmailManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Open Rate</p>
-                <p className="text-2xl font-bold text-green-400">{stats.openRate || 0}%</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {stats.openRate || 0}%
+                </p>
               </div>
               <Eye className="w-8 h-8 text-green-400 opacity-60" />
             </div>
@@ -361,7 +368,9 @@ export function EmailManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Click Rate</p>
-                <p className="text-2xl font-bold text-purple-400">{stats.clickRate || 0}%</p>
+                <p className="text-2xl font-bold text-purple-400">
+                  {stats.clickRate || 0}%
+                </p>
               </div>
               <Target className="w-8 h-8 text-purple-400 opacity-60" />
             </div>
@@ -373,7 +382,9 @@ export function EmailManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Bounce Rate</p>
-                <p className="text-2xl font-bold text-orange-400">{stats.bounceRate || 0}%</p>
+                <p className="text-2xl font-bold text-orange-400">
+                  {stats.bounceRate || 0}%
+                </p>
               </div>
               <AlertCircle className="w-8 h-8 text-orange-400 opacity-60" />
             </div>
@@ -383,13 +394,22 @@ export function EmailManagement() {
 
       <Tabs defaultValue="campaigns" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3 bg-gray-900 border-gray-800">
-          <TabsTrigger value="campaigns" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger
+            value="campaigns"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
             Campaigns
           </TabsTrigger>
-          <TabsTrigger value="templates" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger
+            value="templates"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
             Templates
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger
+            value="analytics"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
             Analytics
           </TabsTrigger>
         </TabsList>
@@ -437,35 +457,71 @@ export function EmailManagement() {
                   <Table>
                     <TableHeader>
                       <TableRow className="border-gray-800">
-                        <TableHead className="text-gray-300">Campaign</TableHead>
+                        <TableHead className="text-gray-300">
+                          Campaign
+                        </TableHead>
                         <TableHead className="text-gray-300">Subject</TableHead>
-                        <TableHead className="text-gray-300">Recipients</TableHead>
+                        <TableHead className="text-gray-300">
+                          Recipients
+                        </TableHead>
                         <TableHead className="text-gray-300">Status</TableHead>
-                        <TableHead className="text-gray-300">Open Rate</TableHead>
-                        <TableHead className="text-gray-300">Sent Date</TableHead>
+                        <TableHead className="text-gray-300">
+                          Open Rate
+                        </TableHead>
+                        <TableHead className="text-gray-300">
+                          Sent Date
+                        </TableHead>
                         <TableHead className="text-gray-300">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredCampaigns.map((campaign: any) => (
-                        <TableRow key={campaign.id} className="border-gray-800 hover:bg-gray-800/50">
-                          <TableCell className="font-medium text-white">{campaign.name}</TableCell>
-                          <TableCell className="text-gray-300">{campaign.subject}</TableCell>
-                          <TableCell className="text-gray-300">{campaign.recipientCount}</TableCell>
-                          <TableCell>{getStatusBadge(campaign.status)}</TableCell>
-                          <TableCell className="text-gray-300">{campaign.openRate}%</TableCell>
+                        <TableRow
+                          key={campaign.id}
+                          className="border-gray-800 hover:bg-gray-800/50"
+                        >
+                          <TableCell className="font-medium text-white">
+                            {campaign.name}
+                          </TableCell>
                           <TableCell className="text-gray-300">
-                            {format(new Date(campaign.sentAt || campaign.createdAt), 'MMM dd, yyyy')}
+                            {campaign.subject}
+                          </TableCell>
+                          <TableCell className="text-gray-300">
+                            {campaign.recipientCount}
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(campaign.status)}
+                          </TableCell>
+                          <TableCell className="text-gray-300">
+                            {campaign.openRate}%
+                          </TableCell>
+                          <TableCell className="text-gray-300">
+                            {format(
+                              new Date(campaign.sentAt || campaign.createdAt),
+                              "MMM dd, yyyy"
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
-                              <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-gray-400 hover:text-white"
+                              >
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-gray-400 hover:text-white"
+                              >
                                 <BarChart3 className="w-4 h-4" />
                               </Button>
-                              <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-gray-400 hover:text-white"
+                              >
                                 <Copy className="w-4 h-4" />
                               </Button>
                             </div>
@@ -474,11 +530,13 @@ export function EmailManagement() {
                       ))}
                     </TableBody>
                   </Table>
-                  
+
                   {filteredCampaigns.length === 0 && (
                     <div className="text-center py-12 text-gray-400">
                       <Mail className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <h3 className="text-lg font-semibold mb-2">No campaigns found</h3>
+                      <h3 className="text-lg font-semibold mb-2">
+                        No campaigns found
+                      </h3>
                       <p>Create your first email campaign to get started</p>
                     </div>
                   )}
@@ -502,71 +560,81 @@ export function EmailManagement() {
 
           {/* Templates Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templatesLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="bg-gray-900 border-gray-800">
-                  <CardContent className="p-6">
-                    <div className="animate-pulse space-y-4">
-                      <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-                      <div className="h-20 bg-gray-700 rounded"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              templates.map((template: any) => (
-                <Card key={template.id} className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-white text-lg">{template.name}</CardTitle>
-                      <Badge variant="outline" className="border-gray-600 text-gray-300">
-                        {template.category}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-400 text-sm mb-4">{template.description}</p>
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                      <span>Used {template.usageCount} times</span>
-                      <span>{format(new Date(template.updatedAt), 'MMM dd')}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="flex-1 border-gray-700 text-gray-300"
-                        onClick={() => handlePreviewTemplate(template)}
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Preview
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="border-gray-700 text-gray-300"
-                        onClick={() => handleEditTemplate(template)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="text-red-400 hover:text-red-300"
-                        onClick={() => handleDeleteTemplate(template.id)}
-                        disabled={deleteTemplate.isPending}
-                      >
-                        {deleteTemplate.isPending ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+            {templatesLoading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <Card key={i} className="bg-gray-900 border-gray-800">
+                    <CardContent className="p-6">
+                      <div className="animate-pulse space-y-4">
+                        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+                        <div className="h-20 bg-gray-700 rounded"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              : templates.map((template: any) => (
+                  <Card
+                    key={template.id}
+                    className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors"
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-white text-lg">
+                          {template.name}
+                        </CardTitle>
+                        <Badge
+                          variant="outline"
+                          className="border-gray-600 text-gray-300"
+                        >
+                          {template.category}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-400 text-sm mb-4">
+                        {template.description}
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                        <span>Used {template.usageCount} times</span>
+                        <span>
+                          {format(new Date(template.updatedAt), "MMM dd")}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 border-gray-700 text-gray-300"
+                          onClick={() => handlePreviewTemplate(template)}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Preview
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-gray-700 text-gray-300"
+                          onClick={() => handleEditTemplate(template)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-400 hover:text-red-300"
+                          onClick={() => handleDeleteTemplate(template.id)}
+                          disabled={deleteTemplate.isPending}
+                        >
+                          {deleteTemplate.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
           </div>
         </TabsContent>
 
@@ -583,18 +651,27 @@ export function EmailManagement() {
               <CardContent>
                 <div className="space-y-4">
                   {analytics.performance?.map((day: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-gray-800 rounded-lg"
+                    >
                       <div className="flex-1">
                         <p className="text-white font-medium">{day.date}</p>
-                        <p className="text-gray-400 text-sm">Sent: {day.sent}</p>
+                        <p className="text-gray-400 text-sm">
+                          Sent: {day.sent}
+                        </p>
                       </div>
                       <div className="flex items-center space-x-4 text-sm">
                         <div className="text-center">
-                          <p className="text-green-400 font-bold">{day.opens}</p>
+                          <p className="text-green-400 font-bold">
+                            {day.opens}
+                          </p>
                           <p className="text-gray-400">Opens</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-blue-400 font-bold">{day.clicks}</p>
+                          <p className="text-blue-400 font-bold">
+                            {day.clicks}
+                          </p>
                           <p className="text-gray-400">Clicks</p>
                         </div>
                       </div>
@@ -618,26 +695,37 @@ export function EmailManagement() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {analytics.campaignTypes?.map((campaign: any, index: number) => (
-                    <div key={index} className="p-4 bg-gray-800 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-white font-medium">{campaign.name}</h4>
-                        <Badge variant="outline" className="border-gray-600 text-gray-300">
-                          {campaign.sent} sent
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-gray-400">Open Rate</p>
-                          <p className="text-green-400 font-bold">{campaign.opens}%</p>
+                  {analytics.campaignTypes?.map(
+                    (campaign: any, index: number) => (
+                      <div key={index} className="p-4 bg-gray-800 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-white font-medium">
+                            {campaign.name}
+                          </h4>
+                          <Badge
+                            variant="outline"
+                            className="border-gray-600 text-gray-300"
+                          >
+                            {campaign.sent} sent
+                          </Badge>
                         </div>
-                        <div>
-                          <p className="text-gray-400">Click Rate</p>
-                          <p className="text-blue-400 font-bold">{campaign.clicks}%</p>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-400">Open Rate</p>
+                            <p className="text-green-400 font-bold">
+                              {campaign.opens}%
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400">Click Rate</p>
+                            <p className="text-blue-400 font-bold">
+                              {campaign.clicks}%
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )) || (
+                    )
+                  ) || (
                     <div className="text-center py-8 text-gray-500">
                       <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
                       <p>No campaign data available</p>
@@ -660,11 +748,18 @@ export function EmailManagement() {
               <CardContent>
                 <div className="space-y-3">
                   {analytics.timeAnalysis?.map((time: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                      <span className="text-white font-medium">{time.hour}</span>
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-gray-800 rounded-lg"
+                    >
+                      <span className="text-white font-medium">
+                        {time.hour}
+                      </span>
                       <div className="flex items-center space-x-3 text-sm">
                         <div className="text-green-400">{time.opens} opens</div>
-                        <div className="text-blue-400">{time.clicks} clicks</div>
+                        <div className="text-blue-400">
+                          {time.clicks} clicks
+                        </div>
                       </div>
                     </div>
                   )) || (
@@ -690,7 +785,9 @@ export function EmailManagement() {
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-white">{device.device}</span>
-                        <span className="text-gray-400">{device.percentage}%</span>
+                        <span className="text-gray-400">
+                          {device.percentage}%
+                        </span>
                       </div>
                       <div className="w-full bg-gray-700 rounded-full h-2">
                         <div
@@ -721,24 +818,31 @@ export function EmailManagement() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="text-center p-4 bg-gray-800 rounded-lg">
-                  <p className="text-2xl font-bold text-blue-400">{analytics.summary?.totalSent || 0}</p>
+                  <p className="text-2xl font-bold text-blue-400">
+                    {analytics.summary?.totalSent || 0}
+                  </p>
                   <p className="text-gray-400 text-sm">Total Emails Sent</p>
                 </div>
                 <div className="text-center p-4 bg-gray-800 rounded-lg">
-                  <p className="text-2xl font-bold text-green-400">{analytics.summary?.avgOpenRate || 0}%</p>
+                  <p className="text-2xl font-bold text-green-400">
+                    {analytics.summary?.avgOpenRate || 0}%
+                  </p>
                   <p className="text-gray-400 text-sm">Avg Open Rate</p>
                 </div>
                 <div className="text-center p-4 bg-gray-800 rounded-lg">
-                  <p className="text-2xl font-bold text-purple-400">{analytics.summary?.avgClickRate || 0}%</p>
+                  <p className="text-2xl font-bold text-purple-400">
+                    {analytics.summary?.avgClickRate || 0}%
+                  </p>
                   <p className="text-gray-400 text-sm">Avg Click Rate</p>
                 </div>
                 <div className="text-center p-4 bg-gray-800 rounded-lg">
-                  <p className="text-2xl font-bold text-orange-400">{analytics.summary?.topCampaign || "N/A"}</p>
+                  <p className="text-2xl font-bold text-orange-400">
+                    {analytics.summary?.topCampaign || "N/A"}
+                  </p>
                   <p className="text-gray-400 text-sm">Top Campaign</p>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
@@ -747,24 +851,30 @@ export function EmailManagement() {
       <Dialog open={showCreateCampaign} onOpenChange={setShowCreateCampaign}>
         <DialogContent className="bg-gray-900 border-gray-800 max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">Create Email Campaign</DialogTitle>
+            <DialogTitle className="text-white">
+              Create Email Campaign
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-gray-300">Campaign Name</Label>
-                <Input 
+                <Input
                   placeholder="Campaign name"
                   value={campaignForm.name}
-                  onChange={(e) => setCampaignForm({ ...campaignForm, name: e.target.value })}
+                  onChange={(e) =>
+                    setCampaignForm({ ...campaignForm, name: e.target.value })
+                  }
                   className="bg-gray-800 border-gray-700 text-white"
                 />
               </div>
               <div>
                 <Label className="text-gray-300">Recipients</Label>
-                <Select 
-                  value={campaignForm.recipients} 
-                  onValueChange={(value) => setCampaignForm({ ...campaignForm, recipients: value })}
+                <Select
+                  value={campaignForm.recipients}
+                  onValueChange={(value) =>
+                    setCampaignForm({ ...campaignForm, recipients: value })
+                  }
                 >
                   <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                     <SelectValue />
@@ -778,30 +888,34 @@ export function EmailManagement() {
                 </Select>
               </div>
             </div>
-            
+
             <div>
               <Label className="text-gray-300">Subject Line</Label>
-              <Input 
+              <Input
                 placeholder="Email subject"
                 value={campaignForm.subject}
-                onChange={(e) => setCampaignForm({ ...campaignForm, subject: e.target.value })}
+                onChange={(e) =>
+                  setCampaignForm({ ...campaignForm, subject: e.target.value })
+                }
                 className="bg-gray-800 border-gray-700 text-white"
               />
             </div>
-            
+
             <div>
               <Label className="text-gray-300">Message</Label>
-              <Textarea 
+              <Textarea
                 placeholder="Email content..."
                 rows={6}
                 value={campaignForm.message}
-                onChange={(e) => setCampaignForm({ ...campaignForm, message: e.target.value })}
+                onChange={(e) =>
+                  setCampaignForm({ ...campaignForm, message: e.target.value })
+                }
                 className="bg-gray-800 border-gray-700 text-white"
               />
             </div>
-            
+
             <div className="flex gap-3">
-              <Button 
+              <Button
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
                 onClick={handleCreateCampaign}
                 disabled={sendCampaign.isPending}
@@ -809,8 +923,8 @@ export function EmailManagement() {
                 <Send className="w-4 h-4 mr-2" />
                 {sendCampaign.isPending ? "Sending..." : "Send Campaign"}
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-gray-700 text-gray-300"
                 onClick={() => setShowCreateCampaign(false)}
               >
@@ -822,13 +936,16 @@ export function EmailManagement() {
       </Dialog>
 
       {/* Create/Edit Template Dialog */}
-      <Dialog open={showCreateTemplate} onOpenChange={(open) => {
-        setShowCreateTemplate(open);
-        if (!open) {
-          setEditingTemplate(null);
-          resetTemplateForm();
-        }
-      }}>
+      <Dialog
+        open={showCreateTemplate}
+        onOpenChange={(open) => {
+          setShowCreateTemplate(open);
+          if (!open) {
+            setEditingTemplate(null);
+            resetTemplateForm();
+          }
+        }}
+      >
         <DialogContent className="bg-gray-900 border-gray-800 max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-white">
@@ -839,18 +956,22 @@ export function EmailManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-gray-300">Template Name</Label>
-                <Input 
+                <Input
                   placeholder="Template name"
                   value={templateForm.name}
-                  onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}
+                  onChange={(e) =>
+                    setTemplateForm({ ...templateForm, name: e.target.value })
+                  }
                   className="bg-gray-800 border-gray-700 text-white"
                 />
               </div>
               <div>
                 <Label className="text-gray-300">Category</Label>
-                <Select 
-                  value={templateForm.category} 
-                  onValueChange={(value) => setTemplateForm({ ...templateForm, category: value })}
+                <Select
+                  value={templateForm.category}
+                  onValueChange={(value) =>
+                    setTemplateForm({ ...templateForm, category: value })
+                  }
                 >
                   <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                     <SelectValue />
@@ -864,40 +985,49 @@ export function EmailManagement() {
                 </Select>
               </div>
             </div>
-            
+
             <div>
               <Label className="text-gray-300">Description</Label>
-              <Input 
+              <Input
                 placeholder="Template description"
                 value={templateForm.description}
-                onChange={(e) => setTemplateForm({ ...templateForm, description: e.target.value })}
+                onChange={(e) =>
+                  setTemplateForm({
+                    ...templateForm,
+                    description: e.target.value,
+                  })
+                }
                 className="bg-gray-800 border-gray-700 text-white"
               />
             </div>
-            
+
             <div>
               <Label className="text-gray-300">Subject Line</Label>
-              <Input 
+              <Input
                 placeholder="Email subject"
                 value={templateForm.subject}
-                onChange={(e) => setTemplateForm({ ...templateForm, subject: e.target.value })}
+                onChange={(e) =>
+                  setTemplateForm({ ...templateForm, subject: e.target.value })
+                }
                 className="bg-gray-800 border-gray-700 text-white"
               />
             </div>
-            
+
             <div>
               <Label className="text-gray-300">Email Content</Label>
-              <Textarea 
+              <Textarea
                 placeholder="Email HTML content..."
                 rows={8}
                 value={templateForm.content}
-                onChange={(e) => setTemplateForm({ ...templateForm, content: e.target.value })}
+                onChange={(e) =>
+                  setTemplateForm({ ...templateForm, content: e.target.value })
+                }
                 className="bg-gray-800 border-gray-700 text-white"
               />
             </div>
-            
+
             <div className="flex gap-3">
-              <Button 
+              <Button
                 className="flex-1 bg-purple-600 hover:bg-purple-700"
                 onClick={handleCreateTemplate}
                 disabled={createTemplate.isPending || updateTemplate.isPending}
@@ -914,8 +1044,8 @@ export function EmailManagement() {
                   </>
                 )}
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-gray-700 text-gray-300"
                 onClick={() => {
                   setShowCreateTemplate(false);
@@ -941,39 +1071,46 @@ export function EmailManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-gray-300">Template Name</Label>
-                  <p className="text-white font-medium">{previewTemplate.name}</p>
+                  <p className="text-white font-medium">
+                    {previewTemplate.name}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-gray-300">Category</Label>
-                  <Badge variant="outline" className="border-gray-600 text-gray-300">
+                  <Badge
+                    variant="outline"
+                    className="border-gray-600 text-gray-300"
+                  >
                     {previewTemplate.category}
                   </Badge>
                 </div>
               </div>
-              
+
               <div>
                 <Label className="text-gray-300">Subject</Label>
-                <p className="text-white font-medium">{previewTemplate.subject}</p>
+                <p className="text-white font-medium">
+                  {previewTemplate.subject}
+                </p>
               </div>
-              
+
               <div>
                 <Label className="text-gray-300">Content Preview</Label>
-                <div 
+                <div
                   className="bg-white p-6 rounded-lg border max-h-96 overflow-y-auto"
                   dangerouslySetInnerHTML={{ __html: previewTemplate.content }}
                 />
               </div>
-              
+
               <div className="flex gap-3">
-                <Button 
+                <Button
                   className="bg-blue-600 hover:bg-blue-700"
                   onClick={() => handleEditTemplate(previewTemplate)}
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Template
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="border-gray-700 text-gray-300"
                   onClick={() => setShowPreviewTemplate(false)}
                 >
