@@ -56,6 +56,7 @@ import {
   BarChart3,
   Filter,
   Search,
+  Save,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -75,6 +76,20 @@ function WorkshopManagementContent() {
   const queryClient = useQueryClient();
   const [reminderType, setReminderType] = useState("email");
   const [reminderMessage, setReminderMessage] = useState("");
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showBulkEmailDialog, setShowBulkEmailDialog] = useState(false);
+  const [selectedAttendees, setSelectedAttendees] = useState<string[]>([]);
+  const [bulkEmailSubject, setBulkEmailSubject] = useState("");
+  const [bulkEmailMessage, setBulkEmailMessage] = useState("");
+  const [workshopForm, setWorkshopForm] = useState({
+    title: "",
+    description: "",
+    date: "",
+    time: "",
+    duration: "",
+    price: "",
+    maxAttendees: 100,
+  });
 
   const { data: workshopStats, isLoading: statsLoading } = useQuery({
     queryKey: ["workshop-stats"],
@@ -86,6 +101,15 @@ function WorkshopManagementContent() {
     refetchInterval: 30000,
   });
 
+  const { data: workshopDetails } = useQuery({
+    queryKey: ["workshop-details"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/workshop/details");
+      if (!response.ok) throw new Error("Failed to fetch workshop details");
+      return response.json();
+    },
+  });
+
   const { data: attendeesData, isLoading: attendeesLoading } = useQuery({
     queryKey: ["workshop-attendees"],
     queryFn: async () => {
@@ -94,6 +118,59 @@ function WorkshopManagementContent() {
       return response.json();
     },
     refetchInterval: 30000,
+  });
+
+  const updateWorkshopDetails = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch("/api/admin/workshop/details", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update workshop details");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workshop-details"] });
+      toast({ title: "Workshop details updated successfully" });
+      setShowEditDialog(false);
+    },
+  });
+
+  const sendBulkEmail = useMutation({
+    mutationFn: async ({ attendeeIds, subject, message }: { attendeeIds: string[]; subject: string; message: string }) => {
+      const response = await fetch("/api/admin/workshop/bulk-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ attendeeIds, subject, message }),
+      });
+      if (!response.ok) throw new Error("Failed to send bulk email");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Bulk email sent successfully" });
+      setShowBulkEmailDialog(false);
+      setSelectedAttendees([]);
+      setBulkEmailSubject("");
+      setBulkEmailMessage("");
+    },
+  });
+
+  const exportAttendees = useMutation({
+    mutationFn: async (format: string) => {
+      const response = await fetch(`/api/admin/workshop/export?format=${format}`);
+      if (!response.ok) throw new Error("Failed to export attendees");
+      return response.blob();
+    },
+    onSuccess: (blob, format) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `workshop-attendees.${format}`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast({ title: "Export completed successfully" });
+    },
   });
 
   const sendReminder = useMutation({
@@ -118,6 +195,50 @@ function WorkshopManagementContent() {
     },
   });
 
+  const handleEditWorkshop = () => {
+    const details = workshopDetails?.data;
+    if (details) {
+      setWorkshopForm({
+        title: details.title,
+        description: details.description,
+        date: details.date,
+        time: details.time,
+        duration: details.duration,
+        price: details.price,
+        maxAttendees: details.maxAttendees,
+      });
+      setShowEditDialog(true);
+    }
+  };
+
+  const handleUpdateWorkshop = () => {
+    if (!workshopForm.title || !workshopForm.date || !workshopForm.time) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    updateWorkshopDetails.mutate(workshopForm);
+  };
+
+  const handleBulkEmail = () => {
+    if (!bulkEmailSubject || !bulkEmailMessage || selectedAttendees.length === 0) {
+      toast({
+        title: "Missing information",
+        description: "Please select attendees and fill in email details",
+        variant: "destructive",
+      });
+      return;
+    }
+    sendBulkEmail.mutate({
+      attendeeIds: selectedAttendees,
+      subject: bulkEmailSubject,
+      message: bulkEmailMessage,
+    });
+  };
+
   const handleSendReminder = () => {
     if (!reminderMessage.trim()) {
       toast({
@@ -133,8 +254,10 @@ function WorkshopManagementContent() {
       message: reminderMessage,
     });
   };
+  
   const stats = workshopStats?.stats || {};
   const attendees = attendeesData?.attendees || [];
+  const details = workshopDetails?.data || {};
 
   return (
     <div className="p-6 space-y-6">
@@ -157,6 +280,25 @@ function WorkshopManagementContent() {
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportAttendees.mutate("csv")}
+            disabled={exportAttendees.isPending}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export List
+          </Button>
+          {selectedAttendees.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBulkEmailDialog(true)}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Bulk Email ({selectedAttendees.length})
+            </Button>
+          )}
           <Dialog>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
@@ -173,7 +315,7 @@ function WorkshopManagementContent() {
               <div className="space-y-4">
                 <div>
                   <Label className="text-gray-300">Reminder Type</Label>
-                  <Select>
+                  <Select value={reminderType} onValueChange={setReminderType}>
                     <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -189,12 +331,18 @@ function WorkshopManagementContent() {
                   <Textarea
                     placeholder="Workshop reminder message..."
                     rows={4}
+                    value={reminderMessage}
+                    onChange={(e) => setReminderMessage(e.target.value)}
                     className="bg-gray-800 border-gray-700 text-white"
                   />
                 </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  onClick={handleSendReminder}
+                  disabled={sendReminder.isPending}
+                >
                   <Send className="w-4 h-4 mr-2" />
-                  Send Reminder
+                  {sendReminder.isPending ? "Sending..." : "Send Reminder"}
                 </Button>
               </div>
             </DialogContent>
@@ -275,26 +423,25 @@ function WorkshopManagementContent() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-gray-400 text-sm">Date</Label>
-                  <p className="text-white font-semibold">January 15, 2025</p>
+                  <p className="text-white font-semibold">{details.date || "January 15, 2025"}</p>
                 </div>
                 <div>
                   <Label className="text-gray-400 text-sm">Time</Label>
-                  <p className="text-white font-semibold">10:00 AM - 1:00 PM</p>
+                  <p className="text-white font-semibold">{details.time || "10:00 AM - 1:00 PM"}</p>
                 </div>
                 <div>
                   <Label className="text-gray-400 text-sm">Duration</Label>
-                  <p className="text-white font-semibold">3 Hours</p>
+                  <p className="text-white font-semibold">{details.duration || "3 Hours"}</p>
                 </div>
                 <div>
                   <Label className="text-gray-400 text-sm">Price</Label>
-                  <p className="text-white font-semibold">₹499</p>
+                  <p className="text-white font-semibold">₹{details.price || "499"}</p>
                 </div>
               </div>
               <div>
                 <Label className="text-gray-400 text-sm">Description</Label>
                 <p className="text-gray-300 mt-1">
-                  Learn automation tools like Zapier, n8n, and Make.com to
-                  streamline your business processes.
+                  {details.description || "Learn automation tools like Zapier, n8n, and Make.com to streamline your business processes."}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -302,6 +449,7 @@ function WorkshopManagementContent() {
                   size="sm"
                   variant="outline"
                   className="border-gray-700 text-gray-300"
+                  onClick={handleEditWorkshop}
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Details
@@ -310,9 +458,11 @@ function WorkshopManagementContent() {
                   size="sm"
                   variant="outline"
                   className="border-gray-700 text-gray-300"
+                  onClick={() => exportAttendees.mutate("csv")}
+                  disabled={exportAttendees.isPending}
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Export List
+                  {exportAttendees.isPending ? "Exporting..." : "Export List"}
                 </Button>
               </div>
             </div>
@@ -380,17 +530,21 @@ function WorkshopManagementContent() {
                 size="sm"
                 variant="outline"
                 className="border-gray-700 text-gray-300"
+                onClick={() => exportAttendees.mutate("csv")}
+                disabled={exportAttendees.isPending}
               >
                 <Download className="w-4 h-4 mr-2" />
-                Export List
+                {exportAttendees.isPending ? "Exporting..." : "Export List"}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 className="border-gray-700 text-gray-300"
+                onClick={() => setShowBulkEmailDialog(true)}
+                disabled={selectedAttendees.length === 0}
               >
                 <Mail className="w-4 h-4 mr-2" />
-                Bulk Email
+                Bulk Email ({selectedAttendees.length})
               </Button>
             </div>
           </div>
@@ -405,6 +559,19 @@ function WorkshopManagementContent() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-gray-800">
+                    <TableHead className="text-gray-300">
+                      <input
+                        type="checkbox"
+                        className="rounded"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedAttendees(attendees.map((a: any) => a.id));
+                          } else {
+                            setSelectedAttendees([]);
+                          }
+                        }}
+                      />
+                    </TableHead>
                     <TableHead className="text-gray-300">Name</TableHead>
                     <TableHead className="text-gray-300">Email</TableHead>
                     <TableHead className="text-gray-300">Phone</TableHead>
@@ -420,6 +587,20 @@ function WorkshopManagementContent() {
                       key={attendee.id}
                       className="border-gray-800 hover:bg-gray-800/50"
                     >
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          className="rounded"
+                          checked={selectedAttendees.includes(attendee.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedAttendees([...selectedAttendees, attendee.id]);
+                            } else {
+                              setSelectedAttendees(selectedAttendees.filter(id => id !== attendee.id));
+                            }
+                          }}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium text-white">
                         {attendee.name}
                       </TableCell>
@@ -454,6 +635,10 @@ function WorkshopManagementContent() {
                             size="sm"
                             variant="ghost"
                             className="text-gray-400 hover:text-white"
+                            onClick={() => {
+                              // Preview attendee details
+                              toast({ title: `Viewing ${attendee.name}`, description: attendee.email });
+                            }}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -461,6 +646,11 @@ function WorkshopManagementContent() {
                             size="sm"
                             variant="ghost"
                             className="text-gray-400 hover:text-white"
+                            onClick={() => {
+                              // Send individual email
+                              setSelectedAttendees([attendee.id]);
+                              setShowBulkEmailDialog(true);
+                            }}
                           >
                             <Mail className="w-4 h-4" />
                           </Button>
@@ -484,6 +674,138 @@ function WorkshopManagementContent() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Workshop Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="bg-gray-900 border-gray-800 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">Edit Workshop Details</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-gray-300">Workshop Title</Label>
+              <Input
+                value={workshopForm.title}
+                onChange={(e) => setWorkshopForm({ ...workshopForm, title: e.target.value })}
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+            </div>
+            
+            <div>
+              <Label className="text-gray-300">Description</Label>
+              <Textarea
+                value={workshopForm.description}
+                onChange={(e) => setWorkshopForm({ ...workshopForm, description: e.target.value })}
+                rows={3}
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Date</Label>
+                <Input
+                  value={workshopForm.date}
+                  onChange={(e) => setWorkshopForm({ ...workshopForm, date: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Time</Label>
+                <Input
+                  value={workshopForm.time}
+                  onChange={(e) => setWorkshopForm({ ...workshopForm, time: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Duration</Label>
+                <Input
+                  value={workshopForm.duration}
+                  onChange={(e) => setWorkshopForm({ ...workshopForm, duration: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Price (₹)</Label>
+                <Input
+                  value={workshopForm.price}
+                  onChange={(e) => setWorkshopForm({ ...workshopForm, price: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <Button
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                onClick={handleUpdateWorkshop}
+                disabled={updateWorkshopDetails.isPending}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {updateWorkshopDetails.isPending ? "Updating..." : "Update Workshop"}
+              </Button>
+              <Button
+                variant="outline"
+                className="border-gray-700 text-gray-300"
+                onClick={() => setShowEditDialog(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Email Dialog */}
+      <Dialog open={showBulkEmailDialog} onOpenChange={setShowBulkEmailDialog}>
+        <DialogContent className="bg-gray-900 border-gray-800">
+          <DialogHeader>
+            <DialogTitle className="text-white">Send Bulk Email</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-gray-300">Subject</Label>
+              <Input
+                value={bulkEmailSubject}
+                onChange={(e) => setBulkEmailSubject(e.target.value)}
+                placeholder="Email subject"
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+            </div>
+            <div>
+              <Label className="text-gray-300">Message</Label>
+              <Textarea
+                value={bulkEmailMessage}
+                onChange={(e) => setBulkEmailMessage(e.target.value)}
+                placeholder="Email message..."
+                rows={6}
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                onClick={handleBulkEmail}
+                disabled={sendBulkEmail.isPending}
+              >
+                <Send className="w-4 h-4 mr-2" />
+                {sendBulkEmail.isPending ? "Sending..." : `Send to ${selectedAttendees.length} attendees`}
+              </Button>
+              <Button
+                variant="outline"
+                className="border-gray-700 text-gray-300"
+                onClick={() => setShowBulkEmailDialog(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
