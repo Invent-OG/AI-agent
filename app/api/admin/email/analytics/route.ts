@@ -56,7 +56,7 @@ export async function GET() {
           totalSent: 1250,
           avgOpenRate: 52,
           avgClickRate: 18,
-          bestDay: "Tuesday",
+          bestDay: "Tuesday", 
           bestTime: "10:00 AM",
           topCampaign: "Workshop Reminders",
         },

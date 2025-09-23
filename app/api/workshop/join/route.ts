@@ -76,6 +76,8 @@ export async function POST(request: NextRequest) {
           returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success?orderId=${orderId}`,
           notifyUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payments/webhook`,
         },
+      };
+
       const cashfreeOrder = await cashfree.createOrder(orderData);
       cashfreeOrderId = cashfreeOrder.cfOrderId;
       paymentUrl = `${process.env.CASHFREE_ENVIRONMENT === 'production' ? 'https://api.cashfree.com' : 'https://sandbox.cashfree.com'}/pg/orders/${cashfreeOrderId}/pay`;
@@ -101,7 +103,7 @@ export async function POST(request: NextRequest) {
         .set({ cashfreeOrderId })
         .where(eq(payments.id, payment.id));
     }
-      };
+
     return NextResponse.json({
       success: true,
       payment: {

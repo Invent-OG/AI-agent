@@ -56,6 +56,10 @@ import {
   Zap,
   Copy,
   FileText,
+  Save,
+  Loader2,
+  Star,
+  Activity,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -202,6 +206,16 @@ export function EmailManagement() {
     },
   });
 
+  const { data: analyticsData } = useQuery({
+    queryKey: ["email-analytics"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/email/analytics");
+      if (!response.ok) throw new Error("Failed to fetch email analytics");
+      return response.json();
+    },
+    refetchInterval: 30000,
+  });
+
   const resetCampaignForm = () => {
     setCampaignForm({
       name: "",
@@ -277,6 +291,7 @@ export function EmailManagement() {
   const campaigns = campaignsData?.campaigns || [];
   const templates = templatesData?.templates || [];
   const stats = emailStats?.stats || {};
+  const analytics = analyticsData?.data || {};
 
   const filteredCampaigns = campaigns.filter((campaign: any) => {
     const matchesSearch = 
@@ -539,8 +554,13 @@ export function EmailManagement() {
                         variant="ghost" 
                         className="text-red-400 hover:text-red-300"
                         onClick={() => handleDeleteTemplate(template.id)}
+                        disabled={deleteTemplate.isPending}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {deleteTemplate.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   </CardContent>
@@ -557,16 +577,34 @@ export function EmailManagement() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center">
                   <BarChart3 className="w-5 h-5 mr-2 text-blue-500" />
-                  Email Performance Trends
+                  Email Performance Over Time
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] flex items-center justify-center text-gray-500">
-                  <div className="text-center">
-                    <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>Performance trends chart</p>
-                    <p className="text-sm">Open rates, click rates over time</p>
-                  </div>
+                <div className="space-y-4">
+                  {analytics.performance?.map((day: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                      <div className="flex-1">
+                        <p className="text-white font-medium">{day.date}</p>
+                        <p className="text-gray-400 text-sm">Sent: {day.sent}</p>
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm">
+                        <div className="text-center">
+                          <p className="text-green-400 font-bold">{day.opens}</p>
+                          <p className="text-gray-400">Opens</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-blue-400 font-bold">{day.clicks}</p>
+                          <p className="text-gray-400">Clicks</p>
+                        </div>
+                      </div>
+                    </div>
+                  )) || (
+                    <div className="text-center py-8 text-gray-500">
+                      <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>No performance data available</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -575,76 +613,132 @@ export function EmailManagement() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center">
                   <Target className="w-5 h-5 mr-2 text-purple-500" />
-                  Campaign Metrics
+                  Campaign Performance by Type
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Average Open Rate</span>
-                    <span className="text-white font-bold">{stats.avgOpenRate || 0}%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Average Click Rate</span>
-                    <span className="text-white font-bold">{stats.avgClickRate || 0}%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Bounce Rate</span>
-                    <span className="text-white font-bold">{stats.bounceRate || 0}%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Unsubscribe Rate</span>
-                    <span className="text-white font-bold">{stats.unsubscribeRate || 0}%</span>
-                  </div>
-                  <div className="pt-4 border-t border-gray-700">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Best Performing Day</span>
-                      <span className="text-white font-bold">Tuesday</span>
+                  {analytics.campaignTypes?.map((campaign: any, index: number) => (
+                    <div key={index} className="p-4 bg-gray-800 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-white font-medium">{campaign.name}</h4>
+                        <Badge variant="outline" className="border-gray-600 text-gray-300">
+                          {campaign.sent} sent
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-400">Open Rate</p>
+                          <p className="text-green-400 font-bold">{campaign.opens}%</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400">Click Rate</p>
+                          <p className="text-blue-400 font-bold">{campaign.clicks}%</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Best Time to Send</span>
-                      <span className="text-white font-bold">10:00 AM</span>
+                  )) || (
+                    <div className="text-center py-8 text-gray-500">
+                      <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>No campaign data available</p>
                     </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Recent Campaign Performance */}
+          {/* Best Performing Times and Device Stats */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <Clock className="w-5 h-5 mr-2 text-green-500" />
+                  Best Performing Times
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {analytics.timeAnalysis?.map((time: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                      <span className="text-white font-medium">{time.hour}</span>
+                      <div className="flex items-center space-x-3 text-sm">
+                        <div className="text-green-400">{time.opens} opens</div>
+                        <div className="text-blue-400">{time.clicks} clicks</div>
+                      </div>
+                    </div>
+                  )) || (
+                    <div className="text-center py-8 text-gray-500">
+                      <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>No time analysis data</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <Activity className="w-5 h-5 mr-2 text-orange-500" />
+                  Device Breakdown
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {analytics.deviceStats?.map((device: any, index: number) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white">{device.device}</span>
+                        <span className="text-gray-400">{device.percentage}%</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div
+                          className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${device.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  )) || (
+                    <div className="text-center py-8 text-gray-500">
+                      <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>No device data available</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Email Summary Stats */}
           <Card className="bg-gray-900 border-gray-800">
             <CardHeader>
               <CardTitle className="text-white flex items-center">
-                <Activity className="w-5 h-5 mr-2 text-green-500" />
-                Recent Campaign Performance
+                <Star className="w-5 h-5 mr-2 text-yellow-500" />
+                Performance Summary
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {campaigns.slice(0, 5).map((campaign: any) => (
-                  <div key={campaign.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="text-white font-medium">{campaign.name}</h4>
-                      <p className="text-gray-400 text-sm">{campaign.subject}</p>
-                    </div>
-                    <div className="flex items-center space-x-4 text-sm">
-                      <div className="text-center">
-                        <p className="text-white font-bold">{campaign.openRate}%</p>
-                        <p className="text-gray-400">Opens</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-white font-bold">{campaign.clickRate}%</p>
-                        <p className="text-gray-400">Clicks</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-white font-bold">{campaign.recipientCount}</p>
-                        <p className="text-gray-400">Sent</p>
-                      </div>
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="text-center p-4 bg-gray-800 rounded-lg">
+                  <p className="text-2xl font-bold text-blue-400">{analytics.summary?.totalSent || 0}</p>
+                  <p className="text-gray-400 text-sm">Total Emails Sent</p>
+                </div>
+                <div className="text-center p-4 bg-gray-800 rounded-lg">
+                  <p className="text-2xl font-bold text-green-400">{analytics.summary?.avgOpenRate || 0}%</p>
+                  <p className="text-gray-400 text-sm">Avg Open Rate</p>
+                </div>
+                <div className="text-center p-4 bg-gray-800 rounded-lg">
+                  <p className="text-2xl font-bold text-purple-400">{analytics.summary?.avgClickRate || 0}%</p>
+                  <p className="text-gray-400 text-sm">Avg Click Rate</p>
+                </div>
+                <div className="text-center p-4 bg-gray-800 rounded-lg">
+                  <p className="text-2xl font-bold text-orange-400">{analytics.summary?.topCampaign || "N/A"}</p>
+                  <p className="text-gray-400 text-sm">Top Campaign</p>
                   </div>
-                ))}
-              </div>
-            </CardContent>
+                </div>
+              </CardContent>
+            </Card>
           </Card>
         </TabsContent>
       </Tabs>
@@ -808,8 +902,17 @@ export function EmailManagement() {
                 onClick={handleCreateTemplate}
                 disabled={createTemplate.isPending || updateTemplate.isPending}
               >
-                <Save className="w-4 h-4 mr-2" />
-                {editingTemplate ? "Update Template" : "Create Template"}
+                {createTemplate.isPending || updateTemplate.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {editingTemplate ? "Updating..." : "Creating..."}
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    {editingTemplate ? "Update Template" : "Create Template"}
+                  </>
+                )}
               </Button>
               <Button 
                 variant="outline" 

@@ -60,6 +60,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function AdminWorkshopPage() {
   return (
@@ -259,6 +260,20 @@ function WorkshopManagementContent() {
   const attendees = attendeesData?.attendees || [];
   const details = workshopDetails?.data || {};
 
+  const handleViewAttendee = (attendee: any) => {
+    toast({ 
+      title: `Viewing ${attendee.name}`, 
+      description: `Email: ${attendee.email}, Status: ${attendee.status}` 
+    });
+  };
+
+  const handleEmailAttendee = (attendee: any) => {
+    setSelectedAttendees([attendee.id]);
+    setBulkEmailSubject("Workshop Update");
+    setBulkEmailMessage(`Hi ${attendee.name},\n\nWe have an important update about the upcoming workshop.\n\nBest regards,\nThe AutomateFlow Team`);
+    setShowBulkEmailDialog(true);
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -287,7 +302,7 @@ function WorkshopManagementContent() {
             disabled={exportAttendees.isPending}
           >
             <Download className="w-4 h-4 mr-2" />
-            Export List
+            {exportAttendees.isPending ? "Exporting..." : "Export List"}
           </Button>
           {selectedAttendees.length > 0 && (
             <Button
@@ -635,10 +650,7 @@ function WorkshopManagementContent() {
                             size="sm"
                             variant="ghost"
                             className="text-gray-400 hover:text-white"
-                            onClick={() => {
-                              // Preview attendee details
-                              toast({ title: `Viewing ${attendee.name}`, description: attendee.email });
-                            }}
+                            onClick={() => handleViewAttendee(attendee)}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -646,11 +658,7 @@ function WorkshopManagementContent() {
                             size="sm"
                             variant="ghost"
                             className="text-gray-400 hover:text-white"
-                            onClick={() => {
-                              // Send individual email
-                              setSelectedAttendees([attendee.id]);
-                              setShowBulkEmailDialog(true);
-                            }}
+                            onClick={() => handleEmailAttendee(attendee)}
                           >
                             <Mail className="w-4 h-4" />
                           </Button>
@@ -705,6 +713,7 @@ function WorkshopManagementContent() {
               <div>
                 <Label className="text-gray-300">Date</Label>
                 <Input
+                  type="date"
                   value={workshopForm.date}
                   onChange={(e) => setWorkshopForm({ ...workshopForm, date: e.target.value })}
                   className="bg-gray-800 border-gray-700 text-white"
@@ -713,6 +722,7 @@ function WorkshopManagementContent() {
               <div>
                 <Label className="text-gray-300">Time</Label>
                 <Input
+                  type="time"
                   value={workshopForm.time}
                   onChange={(e) => setWorkshopForm({ ...workshopForm, time: e.target.value })}
                   className="bg-gray-800 border-gray-700 text-white"
@@ -726,14 +736,17 @@ function WorkshopManagementContent() {
                 <Input
                   value={workshopForm.duration}
                   onChange={(e) => setWorkshopForm({ ...workshopForm, duration: e.target.value })}
+                  placeholder="e.g., 3 Hours"
                   className="bg-gray-800 border-gray-700 text-white"
                 />
               </div>
               <div>
                 <Label className="text-gray-300">Price (₹)</Label>
                 <Input
+                  type="number"
                   value={workshopForm.price}
                   onChange={(e) => setWorkshopForm({ ...workshopForm, price: e.target.value })}
+                  placeholder="499"
                   className="bg-gray-800 border-gray-700 text-white"
                 />
               </div>
@@ -745,8 +758,17 @@ function WorkshopManagementContent() {
                 onClick={handleUpdateWorkshop}
                 disabled={updateWorkshopDetails.isPending}
               >
-                <Save className="w-4 h-4 mr-2" />
-                {updateWorkshopDetails.isPending ? "Updating..." : "Update Workshop"}
+                {updateWorkshopDetails.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Update Workshop
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline"
@@ -792,13 +814,26 @@ function WorkshopManagementContent() {
                 onClick={handleBulkEmail}
                 disabled={sendBulkEmail.isPending}
               >
-                <Send className="w-4 h-4 mr-2" />
-                {sendBulkEmail.isPending ? "Sending..." : `Send to ${selectedAttendees.length} attendees`}
+                {sendBulkEmail.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Send to {selectedAttendees.length} attendees
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline"
                 className="border-gray-700 text-gray-300"
-                onClick={() => setShowBulkEmailDialog(false)}
+                onClick={() => {
+                  setShowBulkEmailDialog(false);
+                  setBulkEmailSubject("");
+                  setBulkEmailMessage("");
+                }}
               >
                 Cancel
               </Button>
