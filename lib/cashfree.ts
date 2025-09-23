@@ -1,9 +1,9 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 
 interface CashfreeConfig {
   appId: string;
   secretKey: string;
-  environment: 'sandbox' | 'production';
+  environment: "sandbox" | "production";
 }
 
 interface CreateOrderRequest {
@@ -42,19 +42,20 @@ class CashfreeClient {
 
   constructor(config: CashfreeConfig) {
     this.config = config;
-    this.baseUrl = config.environment === 'production' 
-      ? 'https://api.cashfree.com/pg' 
-      : 'https://sandbox.cashfree.com/pg';
+    this.baseUrl =
+      config.environment === "production"
+        ? "https://api.cashfree.com/pg"
+        : "https://sandbox.cashfree.com/pg";
   }
 
   private generateSignature(postData: string): string {
     const timestamp = Math.floor(Date.now() / 1000).toString();
-    const signatureData = postData + '/pg/orders' + timestamp;
-    
+    const signatureData = postData + "/pg/orders" + timestamp;
+
     return crypto
-      .createHmac('sha256', this.config.secretKey)
+      .createHmac("sha256", this.config.secretKey)
       .update(signatureData)
-      .digest('base64');
+      .digest("base64");
   }
 
   private getHeaders(postData: string) {
@@ -62,28 +63,30 @@ class CashfreeClient {
     const signature = this.generateSignature(postData);
 
     return {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'x-api-version': '2023-08-01',
-      'x-client-id': this.config.appId,
-      'x-client-secret': this.config.secretKey,
-      'x-request-id': crypto.randomUUID(),
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "x-api-version": "2023-08-01",
+      "x-client-id": this.config.appId,
+      "x-client-secret": this.config.secretKey,
+      "x-request-id": crypto.randomUUID(),
     };
   }
 
-  async createOrder(orderData: CreateOrderRequest): Promise<CashfreeOrderResponse> {
+  async createOrder(
+    orderData: CreateOrderRequest
+  ): Promise<CashfreeOrderResponse> {
     const postData = JSON.stringify(orderData);
     const headers = this.getHeaders(postData);
 
     const response = await fetch(`${this.baseUrl}/orders`, {
-      method: 'POST',
+      method: "POST",
       headers,
       body: postData,
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('Cashfree API Error:', errorData);
+      console.error("Cashfree API Error:", errorData);
       throw new Error(`Cashfree API Error: ${response.status} - ${errorData}`);
     }
 
@@ -91,10 +94,10 @@ class CashfreeClient {
   }
 
   async getOrder(orderId: string): Promise<any> {
-    const headers = this.getHeaders('');
+    const headers = this.getHeaders("");
 
     const response = await fetch(`${this.baseUrl}/orders/${orderId}`, {
-      method: 'GET',
+      method: "GET",
       headers,
     });
 
@@ -111,12 +114,16 @@ class CashfreeClient {
     return `${this.baseUrl}/orders/${orderId}/pay`;
   }
 
-  verifyWebhookSignature(rawBody: string, signature: string, timestamp: string): boolean {
+  verifyWebhookSignature(
+    rawBody: string,
+    signature: string,
+    timestamp: string
+  ): boolean {
     const signatureData = rawBody + timestamp;
     const expectedSignature = crypto
-      .createHmac('sha256', this.config.secretKey)
+      .createHmac("sha256", this.config.secretKey)
       .update(signatureData)
-      .digest('base64');
+      .digest("base64");
 
     return expectedSignature === signature;
   }
@@ -127,11 +134,15 @@ export function getCashfreeClient(): CashfreeClient {
   const config: CashfreeConfig = {
     appId: process.env.CASHFREE_APP_ID!,
     secretKey: process.env.CASHFREE_SECRET_KEY!,
-    environment: (process.env.CASHFREE_ENVIRONMENT as 'sandbox' | 'production') || 'sandbox',
+    environment:
+      (process.env.CASHFREE_ENVIRONMENT as "sandbox" | "production") ||
+      "sandbox",
   };
 
   if (!config.appId || !config.secretKey) {
-    throw new Error('Cashfree credentials not configured. Please set CASHFREE_APP_ID and CASHFREE_SECRET_KEY environment variables.');
+    throw new Error(
+      "Cashfree credentials not configured. Please set CASHFREE_APP_ID and CASHFREE_SECRET_KEY environment variables."
+    );
   }
 
   return new CashfreeClient(config);
