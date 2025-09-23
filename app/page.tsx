@@ -12,6 +12,8 @@ import { Hero2 } from "@/components/ui/hero";
 import FeatureSection from "@/components/landing/FeatureSection";
 
 export default function WorkshopPage() {
+  console.log("object");
+
   return (
     <div className="relative min-h-screen  overflow-hidden">
       <Hero2 />
