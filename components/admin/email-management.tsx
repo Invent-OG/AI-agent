@@ -54,6 +54,8 @@ import {
   TrendingUp,
   Target,
   Zap,
+  Copy,
+  FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -63,6 +65,29 @@ export function EmailManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [templateFilter, setTemplateFilter] = useState("all");
+  const [showCreateCampaign, setShowCreateCampaign] = useState(false);
+  const [showCreateTemplate, setShowCreateTemplate] = useState(false);
+  const [showPreviewTemplate, setShowPreviewTemplate] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<any>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<any>(null);
+
+  // Campaign form state
+  const [campaignForm, setCampaignForm] = useState({
+    name: "",
+    subject: "",
+    message: "",
+    recipients: "all",
+    templateId: "",
+  });
+
+  // Template form state
+  const [templateForm, setTemplateForm] = useState({
+    name: "",
+    description: "",
+    category: "onboarding",
+    subject: "",
+    content: "",
+  });
 
   const { data: campaignsData, isLoading } = useQuery({
     queryKey: ["email-campaigns", statusFilter, templateFilter],
@@ -78,7 +103,7 @@ export function EmailManagement() {
     refetchInterval: 30000,
   });
 
-  const { data: templatesData } = useQuery({
+  const { data: templatesData, isLoading: templatesLoading } = useQuery({
     queryKey: ["email-templates"],
     queryFn: async () => {
       const response = await fetch("/api/admin/email/templates");
@@ -103,12 +128,27 @@ export function EmailManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(campaignData),
       });
-      if (!response.ok) throw new Error("Failed to send campaign");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to send campaign");
+      }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["email-campaigns"] });
-      toast({ title: "Email campaign sent successfully" });
+      toast({ 
+        title: "Campaign sent successfully", 
+        description: data.message 
+      });
+      setShowCreateCampaign(false);
+      resetCampaignForm();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to send campaign",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -125,8 +165,114 @@ export function EmailManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email-templates"] });
       toast({ title: "Template created successfully" });
+      setShowCreateTemplate(false);
+      resetTemplateForm();
     },
   });
+
+  const updateTemplate = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const response = await fetch(`/api/admin/email/templates/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update template");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["email-templates"] });
+      toast({ title: "Template updated successfully" });
+      setEditingTemplate(null);
+      resetTemplateForm();
+    },
+  });
+
+  const deleteTemplate = useMutation({
+    mutationFn: async (templateId: string) => {
+      const response = await fetch(`/api/admin/email/templates/${templateId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete template");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["email-templates"] });
+      toast({ title: "Template deleted successfully" });
+    },
+  });
+
+  const resetCampaignForm = () => {
+    setCampaignForm({
+      name: "",
+      subject: "",
+      message: "",
+      recipients: "all",
+      templateId: "",
+    });
+  };
+
+  const resetTemplateForm = () => {
+    setTemplateForm({
+      name: "",
+      description: "",
+      category: "onboarding",
+      subject: "",
+      content: "",
+    });
+  };
+
+  const handleCreateCampaign = () => {
+    if (!campaignForm.name || !campaignForm.subject || !campaignForm.message) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    sendCampaign.mutate(campaignForm);
+  };
+
+  const handleCreateTemplate = () => {
+    if (!templateForm.name || !templateForm.subject || !templateForm.content) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (editingTemplate) {
+      updateTemplate.mutate({ id: editingTemplate.id, data: templateForm });
+    } else {
+      createTemplate.mutate(templateForm);
+    }
+  };
+
+  const handleEditTemplate = (template: any) => {
+    setEditingTemplate(template);
+    setTemplateForm({
+      name: template.name,
+      description: template.description,
+      category: template.category,
+      subject: template.subject,
+      content: template.content,
+    });
+    setShowCreateTemplate(true);
+  };
+
+  const handlePreviewTemplate = (template: any) => {
+    setPreviewTemplate(template);
+    setShowPreviewTemplate(true);
+  };
+
+  const handleDeleteTemplate = (templateId: string) => {
+    if (confirm("Are you sure you want to delete this template?")) {
+      deleteTemplate.mutate(templateId);
+    }
+  };
 
   const campaigns = campaignsData?.campaigns || [];
   const templates = templatesData?.templates || [];
@@ -135,7 +281,7 @@ export function EmailManagement() {
   const filteredCampaigns = campaigns.filter((campaign: any) => {
     const matchesSearch = 
       campaign.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.templateName?.toLowerCase().includes(searchTerm.toLowerCase());
+      campaign.name.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
@@ -159,87 +305,13 @@ export function EmailManagement() {
           <p className="text-gray-400">Create and manage email campaigns</p>
         </div>
         <div className="flex items-center gap-3">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                New Campaign
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-gray-900 border-gray-800 max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-white">Create Email Campaign</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-300">Campaign Name</Label>
-                    <Input 
-                      placeholder="Campaign name"
-                      className="bg-gray-800 border-gray-700 text-white"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-300">Template</Label>
-                    <Select>
-                      <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                        <SelectValue placeholder="Select template" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {templates.map((template: any) => (
-                          <SelectItem key={template.id} value={template.id}>
-                            {template.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label className="text-gray-300">Subject Line</Label>
-                  <Input 
-                    placeholder="Email subject"
-                    className="bg-gray-800 border-gray-700 text-white"
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-gray-300">Recipients</Label>
-                  <Select>
-                    <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                      <SelectValue placeholder="Select recipients" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Leads</SelectItem>
-                      <SelectItem value="new">New Leads</SelectItem>
-                      <SelectItem value="registered">Registered Users</SelectItem>
-                      <SelectItem value="paid">Paid Customers</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label className="text-gray-300">Message</Label>
-                  <Textarea 
-                    placeholder="Email content..."
-                    rows={6}
-                    className="bg-gray-800 border-gray-700 text-white"
-                  />
-                </div>
-                
-                <div className="flex gap-3">
-                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700">
-                    <Send className="w-4 h-4 mr-2" />
-                    Send Now
-                  </Button>
-                  <Button variant="outline" className="border-gray-700 text-gray-300">
-                    Save Draft
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button
+            onClick={() => setShowCreateCampaign(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Campaign
+          </Button>
         </div>
       </div>
 
@@ -326,6 +398,17 @@ export function EmailManagement() {
                       className="pl-10 w-64 bg-gray-800 border-gray-700 text-white"
                     />
                   </div>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-32 bg-gray-800 border-gray-700 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="sent">Sent</SelectItem>
+                      <SelectItem value="sending">Sending</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardHeader>
@@ -365,10 +448,10 @@ export function EmailManagement() {
                                 <Eye className="w-4 h-4" />
                               </Button>
                               <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
-                                <Edit className="w-4 h-4" />
+                                <BarChart3 className="w-4 h-4" />
                               </Button>
                               <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
-                                <BarChart3 className="w-4 h-4" />
+                                <Copy className="w-4 h-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -391,52 +474,79 @@ export function EmailManagement() {
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-white">Email Templates</h3>
+            <Button
+              onClick={() => setShowCreateTemplate(true)}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Template
+            </Button>
+          </div>
+
           {/* Templates Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates.map((template: any) => (
-              <Card key={template.id} className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-white text-lg">{template.name}</CardTitle>
-                    <Badge variant="outline" className="border-gray-600 text-gray-300">
-                      {template.category}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-400 text-sm mb-4">{template.description}</p>
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                    <span>Used {template.usageCount} times</span>
-                    <span>{format(new Date(template.updatedAt), 'MMM dd')}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1 border-gray-700 text-gray-300">
-                      <Eye className="w-4 h-4 mr-2" />
-                      Preview
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1 border-gray-700 text-gray-300">
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            
-            {/* Add New Template Card */}
-            <Card className="bg-gray-900 border-gray-800 border-dashed hover:border-gray-700 transition-colors">
-              <CardContent className="p-6 flex flex-col items-center justify-center h-full min-h-[200px]">
-                <Plus className="w-12 h-12 text-gray-500 mb-4" />
-                <h3 className="text-white font-semibold mb-2">Create New Template</h3>
-                <p className="text-gray-400 text-sm text-center mb-4">
-                  Design a new email template for your campaigns
-                </p>
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Template
-                </Button>
-              </CardContent>
-            </Card>
+            {templatesLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <Card key={i} className="bg-gray-900 border-gray-800">
+                  <CardContent className="p-6">
+                    <div className="animate-pulse space-y-4">
+                      <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+                      <div className="h-20 bg-gray-700 rounded"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              templates.map((template: any) => (
+                <Card key={template.id} className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-white text-lg">{template.name}</CardTitle>
+                      <Badge variant="outline" className="border-gray-600 text-gray-300">
+                        {template.category}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-400 text-sm mb-4">{template.description}</p>
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                      <span>Used {template.usageCount} times</span>
+                      <span>{format(new Date(template.updatedAt), 'MMM dd')}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 border-gray-700 text-gray-300"
+                        onClick={() => handlePreviewTemplate(template)}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Preview
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-gray-700 text-gray-300"
+                        onClick={() => handleEditTemplate(template)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="text-red-400 hover:text-red-300"
+                        onClick={() => handleDeleteTemplate(template.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </TabsContent>
 
@@ -447,14 +557,15 @@ export function EmailManagement() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center">
                   <BarChart3 className="w-5 h-5 mr-2 text-blue-500" />
-                  Email Performance
+                  Email Performance Trends
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] flex items-center justify-center text-gray-500">
                   <div className="text-center">
-                    <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>Email performance chart</p>
+                    <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>Performance trends chart</p>
+                    <p className="text-sm">Open rates, click rates over time</p>
                   </div>
                 </div>
               </CardContent>
@@ -485,12 +596,291 @@ export function EmailManagement() {
                     <span className="text-gray-400">Unsubscribe Rate</span>
                     <span className="text-white font-bold">{stats.unsubscribeRate || 0}%</span>
                   </div>
+                  <div className="pt-4 border-t border-gray-700">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Best Performing Day</span>
+                      <span className="text-white font-bold">Tuesday</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Best Time to Send</span>
+                      <span className="text-white font-bold">10:00 AM</span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
+
+          {/* Recent Campaign Performance */}
+          <Card className="bg-gray-900 border-gray-800">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center">
+                <Activity className="w-5 h-5 mr-2 text-green-500" />
+                Recent Campaign Performance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {campaigns.slice(0, 5).map((campaign: any) => (
+                  <div key={campaign.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="text-white font-medium">{campaign.name}</h4>
+                      <p className="text-gray-400 text-sm">{campaign.subject}</p>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm">
+                      <div className="text-center">
+                        <p className="text-white font-bold">{campaign.openRate}%</p>
+                        <p className="text-gray-400">Opens</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-white font-bold">{campaign.clickRate}%</p>
+                        <p className="text-gray-400">Clicks</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-white font-bold">{campaign.recipientCount}</p>
+                        <p className="text-gray-400">Sent</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Create Campaign Dialog */}
+      <Dialog open={showCreateCampaign} onOpenChange={setShowCreateCampaign}>
+        <DialogContent className="bg-gray-900 border-gray-800 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">Create Email Campaign</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Campaign Name</Label>
+                <Input 
+                  placeholder="Campaign name"
+                  value={campaignForm.name}
+                  onChange={(e) => setCampaignForm({ ...campaignForm, name: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Recipients</Label>
+                <Select 
+                  value={campaignForm.recipients} 
+                  onValueChange={(value) => setCampaignForm({ ...campaignForm, recipients: value })}
+                >
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Leads</SelectItem>
+                    <SelectItem value="new">New Leads</SelectItem>
+                    <SelectItem value="registered">Registered Users</SelectItem>
+                    <SelectItem value="paid">Paid Customers</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div>
+              <Label className="text-gray-300">Subject Line</Label>
+              <Input 
+                placeholder="Email subject"
+                value={campaignForm.subject}
+                onChange={(e) => setCampaignForm({ ...campaignForm, subject: e.target.value })}
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+            </div>
+            
+            <div>
+              <Label className="text-gray-300">Message</Label>
+              <Textarea 
+                placeholder="Email content..."
+                rows={6}
+                value={campaignForm.message}
+                onChange={(e) => setCampaignForm({ ...campaignForm, message: e.target.value })}
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+            </div>
+            
+            <div className="flex gap-3">
+              <Button 
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                onClick={handleCreateCampaign}
+                disabled={sendCampaign.isPending}
+              >
+                <Send className="w-4 h-4 mr-2" />
+                {sendCampaign.isPending ? "Sending..." : "Send Campaign"}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-gray-700 text-gray-300"
+                onClick={() => setShowCreateCampaign(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create/Edit Template Dialog */}
+      <Dialog open={showCreateTemplate} onOpenChange={(open) => {
+        setShowCreateTemplate(open);
+        if (!open) {
+          setEditingTemplate(null);
+          resetTemplateForm();
+        }
+      }}>
+        <DialogContent className="bg-gray-900 border-gray-800 max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              {editingTemplate ? "Edit Template" : "Create Email Template"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-300">Template Name</Label>
+                <Input 
+                  placeholder="Template name"
+                  value={templateForm.name}
+                  onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Category</Label>
+                <Select 
+                  value={templateForm.category} 
+                  onValueChange={(value) => setTemplateForm({ ...templateForm, category: value })}
+                >
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="onboarding">Onboarding</SelectItem>
+                    <SelectItem value="workshop">Workshop</SelectItem>
+                    <SelectItem value="achievement">Achievement</SelectItem>
+                    <SelectItem value="marketing">Marketing</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div>
+              <Label className="text-gray-300">Description</Label>
+              <Input 
+                placeholder="Template description"
+                value={templateForm.description}
+                onChange={(e) => setTemplateForm({ ...templateForm, description: e.target.value })}
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+            </div>
+            
+            <div>
+              <Label className="text-gray-300">Subject Line</Label>
+              <Input 
+                placeholder="Email subject"
+                value={templateForm.subject}
+                onChange={(e) => setTemplateForm({ ...templateForm, subject: e.target.value })}
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+            </div>
+            
+            <div>
+              <Label className="text-gray-300">Email Content</Label>
+              <Textarea 
+                placeholder="Email HTML content..."
+                rows={8}
+                value={templateForm.content}
+                onChange={(e) => setTemplateForm({ ...templateForm, content: e.target.value })}
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+            </div>
+            
+            <div className="flex gap-3">
+              <Button 
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                onClick={handleCreateTemplate}
+                disabled={createTemplate.isPending || updateTemplate.isPending}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {editingTemplate ? "Update Template" : "Create Template"}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-gray-700 text-gray-300"
+                onClick={() => {
+                  setShowCreateTemplate(false);
+                  setEditingTemplate(null);
+                  resetTemplateForm();
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Template Dialog */}
+      <Dialog open={showPreviewTemplate} onOpenChange={setShowPreviewTemplate}>
+        <DialogContent className="bg-gray-900 border-gray-800 max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">Template Preview</DialogTitle>
+          </DialogHeader>
+          {previewTemplate && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-300">Template Name</Label>
+                  <p className="text-white font-medium">{previewTemplate.name}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-300">Category</Label>
+                  <Badge variant="outline" className="border-gray-600 text-gray-300">
+                    {previewTemplate.category}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-gray-300">Subject</Label>
+                <p className="text-white font-medium">{previewTemplate.subject}</p>
+              </div>
+              
+              <div>
+                <Label className="text-gray-300">Content Preview</Label>
+                <div 
+                  className="bg-white p-6 rounded-lg border max-h-96 overflow-y-auto"
+                  dangerouslySetInnerHTML={{ __html: previewTemplate.content }}
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => handleEditTemplate(previewTemplate)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Template
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-gray-700 text-gray-300"
+                  onClick={() => setShowPreviewTemplate(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
