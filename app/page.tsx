@@ -51,9 +51,9 @@ export default function WorkshopPage() {
         <PricingGlow />
       </section>
 
-      {/* <section id="register">
+      <section id="register">
         <RegistrationForm />
-      </section> */}
+      </section>
 
       <section id="faq">
         <AnimatedFAQ />
