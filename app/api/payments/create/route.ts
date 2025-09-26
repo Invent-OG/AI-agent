@@ -57,18 +57,18 @@ export async function POST(request: NextRequest) {
 
       // Create Cashfree order
       const orderData = {
-        orderId,
-        orderAmount: amount,
-        orderCurrency: "INR",
-        customerDetails: {
-          customerId: lead.id,
-          customerName: lead.name,
-          customerEmail: lead.email,
-          customerPhone: lead.phone || "9999999999",
+        order_id: orderId,
+        order_amount: amount,
+        order_currency: "INR",
+        customer_details: {
+          customer_id: lead.id,
+          customer_name: lead.name,
+          customer_email: lead.email,
+          customer_phone: lead.phone || "9999999999",
         },
-        orderMeta: {
-          returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/payment/success?orderId=${orderId}`,
-          notifyUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payments/webhook`,
+        order_meta: {
+          return_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/payment/success?orderId=${orderId}`,
+          notify_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payments/webhook`,
         },
       };
 
@@ -78,25 +78,25 @@ export async function POST(request: NextRequest) {
       await db
         .update(payments)
         .set({
-          cashfreeOrderId: cashfreeOrder.cfOrderId,
+          cashfreeOrderId: cashfreeOrder.cf_order_id,
           updatedAt: new Date(),
         })
         .where(eq(payments.id, payment.id));
 
       // Generate payment URL
-      const paymentUrl = `https://sandbox.cashfree.com/pg/orders/${cashfreeOrder.cfOrderId}/pay`;
+      const paymentUrl = `${process.env.CASHFREE_ENVIRONMENT === 'production' ? 'https://api.cashfree.com' : 'https://sandbox.cashfree.com'}/pg/orders/${cashfreeOrder.cf_order_id}/pay`;
 
       return NextResponse.json({
         success: true,
         payment: {
           ...payment,
-          cashfreeOrderId: cashfreeOrder.cfOrderId,
+          cashfreeOrderId: cashfreeOrder.cf_order_id,
         },
         cashfree: {
-          orderId: cashfreeOrder.cfOrderId,
+          orderId: cashfreeOrder.cf_order_id,
           paymentUrl,
-          orderStatus: cashfreeOrder.orderStatus,
-          paymentSessionId: cashfreeOrder.paymentSessionId,
+          orderStatus: cashfreeOrder.order_status,
+          paymentSessionId: cashfreeOrder.payment_session_id,
         },
       });
     } catch (cashfreeError) {

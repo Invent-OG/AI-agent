@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const order = data.order ?? {};
     const payment = data.payment ?? {};
 
-    const cashfreeOrderId: string | undefined = order.order_id;
+    const cashfreeOrderId: string | undefined = order.cf_order_id || order.order_id;
     const order_status: string | undefined = order.order_status;
     const cashfreePaymentId: string | undefined = payment.cf_payment_id;
 

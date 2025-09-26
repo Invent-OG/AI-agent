@@ -7,33 +7,33 @@ interface CashfreeConfig {
 }
 
 interface CreateOrderRequest {
-  orderId: string;
-  orderAmount: number;
-  orderCurrency: string;
-  customerDetails: {
-    customerId: string;
-    customerName: string;
-    customerEmail: string;
-    customerPhone: string;
+  order_id: string;
+  order_amount: number;
+  order_currency: string;
+  customer_details: {
+    customer_id: string;
+    customer_name: string;
+    customer_email: string;
+    customer_phone: string;
   };
-  orderMeta?: {
-    returnUrl?: string;
-    notifyUrl?: string;
+  order_meta?: {
+    return_url?: string;
+    notify_url?: string;
   };
 }
 
 interface CashfreeOrderResponse {
-  cfOrderId: string;
-  orderId: string;
+  cf_order_id: string;
+  order_id: string;
   entity: string;
-  orderCurrency: string;
-  orderAmount: number;
-  orderStatus: string;
-  paymentSessionId: string;
-  orderExpiryTime: string;
-  orderNote?: string;
-  createdAt: string;
-  orderTags?: any;
+  order_currency: string;
+  order_amount: number;
+  order_status: string;
+  payment_session_id: string;
+  order_expiry_time: string;
+  order_note?: string;
+  created_at: string;
+  order_tags?: any;
 }
 
 class CashfreeClient {
@@ -48,45 +48,35 @@ class CashfreeClient {
         : "https://sandbox.cashfree.com/pg";
   }
 
-  private generateSignature(postData: string): string {
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const signatureData = postData + "/pg/orders" + timestamp;
-
-    return crypto
-      .createHmac("sha256", this.config.secretKey)
-      .update(signatureData)
-      .digest("base64");
-  }
-
-  private getHeaders(postData: string) {
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const signature = this.generateSignature(postData);
-
+  private getHeaders() {
     return {
       Accept: "application/json",
       "Content-Type": "application/json",
       "x-api-version": "2023-08-01",
       "x-client-id": this.config.appId,
       "x-client-secret": this.config.secretKey,
-      "x-request-id": crypto.randomUUID(),
     };
   }
 
-  async createOrder(
-    orderData: CreateOrderRequest
-  ): Promise<CashfreeOrderResponse> {
-    const postData = JSON.stringify(orderData);
-    const headers = this.getHeaders(postData);
+  async createOrder(orderData: CreateOrderRequest): Promise<CashfreeOrderResponse> {
+    const headers = this.getHeaders();
 
     const response = await fetch(`${this.baseUrl}/orders`, {
       method: "POST",
       headers,
-      body: postData,
+      body: JSON.stringify(orderData),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error("Cashfree API Error:", errorData);
+      console.error("Cashfree API Error:", {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        url: `${this.baseUrl}/orders`,
+        headers: headers,
+        body: orderData
+      });
       throw new Error(`Cashfree API Error: ${response.status} - ${errorData}`);
     }
 
@@ -94,7 +84,7 @@ class CashfreeClient {
   }
 
   async getOrder(orderId: string): Promise<any> {
-    const headers = this.getHeaders("");
+    const headers = this.getHeaders();
 
     const response = await fetch(`${this.baseUrl}/orders/${orderId}`, {
       method: "GET",
@@ -110,7 +100,6 @@ class CashfreeClient {
   }
 
   async getPaymentLink(orderId: string): Promise<string> {
-    const order = await this.getOrder(orderId);
     return `${this.baseUrl}/orders/${orderId}/pay`;
   }
 
@@ -119,13 +108,18 @@ class CashfreeClient {
     signature: string,
     timestamp: string
   ): boolean {
-    const signatureData = rawBody + timestamp;
-    const expectedSignature = crypto
-      .createHmac("sha256", this.config.secretKey)
-      .update(signatureData)
-      .digest("base64");
+    try {
+      const signatureData = rawBody + timestamp;
+      const expectedSignature = crypto
+        .createHmac("sha256", this.config.secretKey)
+        .update(signatureData)
+        .digest("base64");
 
-    return expectedSignature === signature;
+      return expectedSignature === signature;
+    } catch (error) {
+      console.error("Signature verification error:", error);
+      return false;
+    }
   }
 }
 

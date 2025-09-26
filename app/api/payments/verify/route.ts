@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       const orderStatus = await cashfree.getOrder(orderId);
       
       // Update local payment status if different
-      if (orderStatus.order_status === 'PAID' && payment.status !== 'success') {
+      if ((orderStatus.order_status === 'PAID' || orderStatus.order_status === 'ACTIVE') && payment.status !== 'success') {
         await db
           .update(payments)
           .set({ 
