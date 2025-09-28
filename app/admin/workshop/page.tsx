@@ -34,33 +34,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Calendar,
-  Users,
-  DollarSign,
-  TrendingUp,
-  Clock,
-  MapPin,
-  Mail,
-  Download,
-  RefreshCw,
-  Edit,
-  Send,
-  Plus,
-  Eye,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Target,
-  Activity,
-  BarChart3,
-  Filter,
-  Search,
-  Save,
-} from "lucide-react";
+import { Calendar, Users, DollarSign, TrendingUp, Clock, MapPin, Mail, Download, RefreshCw, CreditCard as Edit, Send, Plus, Eye, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, Target, Activity, ChartBar as BarChart3, Filter, Search, Save } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader as Loader2 } from "lucide-react";
 
 export default function AdminWorkshopPage() {
   return (

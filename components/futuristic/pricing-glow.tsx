@@ -4,15 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useQuery } from "@tanstack/react-query";
-import {
-  CheckCircle,
-  Zap,
-  Gift,
-  Users,
-  Clock,
-  Shield,
-  Star,
-} from "lucide-react";
+import { CircleCheck as CheckCircle, Zap, Gift, Users, Clock, Shield, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

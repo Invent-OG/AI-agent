@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, CheckCircle, Sparkles, Shield, Clock, Users, Bot } from 'lucide-react'
+import { Loader as Loader2, CircleCheck as CheckCircle, Sparkles, Shield, Clock, Users, Bot } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 const registrationSchema = z.object({
