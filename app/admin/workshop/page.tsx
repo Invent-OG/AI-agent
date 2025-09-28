@@ -88,7 +88,9 @@ function WorkshopManagementContent() {
     date: "",
     time: "",
     duration: "",
-    price: "",
+    currentPrice: "",
+    originalPrice: "",
+    discount: "",
     maxAttendees: 100,
   });
 
@@ -205,7 +207,9 @@ function WorkshopManagementContent() {
         date: details.date,
         time: details.time,
         duration: details.duration,
-        price: details.price,
+        currentPrice: details.pricing?.current?.toString() || "",
+        originalPrice: details.pricing?.original?.toString() || "",
+        discount: details.pricing?.discount?.toString() || "",
         maxAttendees: details.maxAttendees,
       });
       setShowEditDialog(true);
@@ -213,7 +217,7 @@ function WorkshopManagementContent() {
   };
 
   const handleUpdateWorkshop = () => {
-    if (!workshopForm.title || !workshopForm.date || !workshopForm.time) {
+    if (!workshopForm.title || !workshopForm.date || !workshopForm.time || !workshopForm.currentPrice) {
       toast({
         title: "Missing fields",
         description: "Please fill in all required fields",
@@ -221,7 +225,19 @@ function WorkshopManagementContent() {
       });
       return;
     }
-    updateWorkshopDetails.mutate(workshopForm);
+    
+    // Prepare update data with pricing structure
+    const updateData = {
+      ...workshopForm,
+      pricing: {
+        current: parseInt(workshopForm.currentPrice),
+        original: parseInt(workshopForm.originalPrice),
+        discount: parseInt(workshopForm.discount),
+        currency: "INR",
+      },
+    };
+    
+    updateWorkshopDetails.mutate(updateData);
   };
 
   const handleBulkEmail = () => {
@@ -438,25 +454,29 @@ function WorkshopManagementContent() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-gray-400 text-sm">Date</Label>
-                  <p className="text-white font-semibold">{details.date || "January 15, 2025"}</p>
+                  <p className="text-white font-semibold">{details.date}</p>
                 </div>
                 <div>
                   <Label className="text-gray-400 text-sm">Time</Label>
-                  <p className="text-white font-semibold">{details.time || "10:00 AM - 1:00 PM"}</p>
+                  <p className="text-white font-semibold">{details.time}</p>
                 </div>
                 <div>
                   <Label className="text-gray-400 text-sm">Duration</Label>
-                  <p className="text-white font-semibold">{details.duration || "3 Hours"}</p>
+                  <p className="text-white font-semibold">{details.duration}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-400 text-sm">Price</Label>
-                  <p className="text-white font-semibold">₹{details.price || "499"}</p>
+                  <Label className="text-gray-400 text-sm">Current Price</Label>
+                  <div className="flex items-center space-x-2">
+                    <p className="text-white font-semibold">₹{details.pricing?.current?.toLocaleString()}</p>
+                    <span className="text-gray-400 line-through text-sm">₹{details.pricing?.original?.toLocaleString()}</span>
+                    <span className="text-green-400 text-sm">({details.pricing?.discount}% OFF)</span>
+                  </div>
                 </div>
               </div>
               <div>
                 <Label className="text-gray-400 text-sm">Description</Label>
                 <p className="text-gray-300 mt-1">
-                  {details.description || "Learn automation tools like Zapier, n8n, and Make.com to streamline your business processes."}
+                  {details.description}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -732,6 +752,29 @@ function WorkshopManagementContent() {
             
             <div className="grid grid-cols-2 gap-4">
               <div>
+                <Label className="text-gray-300">Current Price (₹) *</Label>
+                <Input
+                  type="number"
+                  value={workshopForm.currentPrice}
+                  onChange={(e) => setWorkshopForm({ ...workshopForm, currentPrice: e.target.value })}
+                  placeholder="499"
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-300">Original Price (₹) *</Label>
+                <Input
+                  type="number"
+                  value={workshopForm.originalPrice}
+                  onChange={(e) => setWorkshopForm({ ...workshopForm, originalPrice: e.target.value })}
+                  placeholder="2999"
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <Label className="text-gray-300">Duration</Label>
                 <Input
                   value={workshopForm.duration}
@@ -741,12 +784,12 @@ function WorkshopManagementContent() {
                 />
               </div>
               <div>
-                <Label className="text-gray-300">Price (₹)</Label>
+                <Label className="text-gray-300">Discount (%)</Label>
                 <Input
                   type="number"
-                  value={workshopForm.price}
-                  onChange={(e) => setWorkshopForm({ ...workshopForm, price: e.target.value })}
-                  placeholder="499"
+                  value={workshopForm.discount}
+                  onChange={(e) => setWorkshopForm({ ...workshopForm, discount: e.target.value })}
+                  placeholder="83"
                   className="bg-gray-800 border-gray-700 text-white"
                 />
               </div>

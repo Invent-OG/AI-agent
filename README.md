@@ -74,7 +74,7 @@ A comprehensive web application built with Next.js, Supabase, and Drizzle ORM fo
 - Node.js 18+ 
 - npm or yarn
 - Supabase account
-- Cashfree merchant account
+- Cashfree merchant account (get from https://www.cashfree.com/)
 
 ### Installation
 
@@ -96,7 +96,7 @@ cp .env.example .env.local
 
 Fill in your environment variables:
 - Supabase credentials
-- Cashfree API keys
+- Cashfree API keys (App ID and Secret Key from Cashfree Dashboard)
 - Email service credentials
 
 4. **Set up database**
@@ -128,15 +128,25 @@ Visit `http://localhost:3000` to see the application.
 
 ## 💳 Payment Integration
 
-The app integrates with Cashfree for secure payment processing:
+The app integrates with Cashfree Payment Gateway API v2023-08-01:
 
 1. Lead submits enrollment form
-2. Payment order created via Cashfree API
-3. User redirected to Cashfree payment page
-4. Webhook updates payment status
+2. Payment order created via Cashfree Orders API
+3. User redirected to Cashfree hosted payment page
+4. Webhook receives payment status updates
 5. Lead status updated to 'paid'
 6. Confirmation email/WhatsApp sent
 
+### Cashfree Setup
+1. Create account at https://www.cashfree.com/
+2. Get App ID and Secret Key from Dashboard
+3. Configure webhook URL: `your-domain.com/api/payments/webhook`
+4. Set environment variables in `.env.local`
+
+### Payment Flow
+- **Sandbox**: Uses `https://payments-test.cashfree.com`
+- **Production**: Uses `https://payments.cashfree.com`
+- **API Base**: `https://sandbox.cashfree.com/pg` (sandbox) or `https://api.cashfree.com/pg` (production)
 ## 📈 Analytics & Admin Features
 
 - **Real-time Dashboard**: Monitor key metrics

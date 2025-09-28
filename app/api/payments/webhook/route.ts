@@ -8,9 +8,20 @@ import { getCashfreeClient } from "@/lib/cashfree";
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
-    const body = JSON.parse(rawBody);
+    console.log("Webhook received:", rawBody);
 
-    // Verify webhook signature
+    let body;
+    try {
+      body = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error("Failed to parse webhook body:", parseError);
+      return NextResponse.json(
+        { success: false, error: "Invalid JSON" },
+        { status: 400 }
+      );
+    }
+
+    // Verify webhook signature according to Cashfree docs
     const signature = request.headers.get("x-webhook-signature");
     const timestamp = request.headers.get("x-webhook-timestamp");
 
@@ -36,16 +47,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Safe destructuring with defaults
-    const data = body?.data ?? {};
-    const order = data.order ?? {};
-    const payment = data.payment ?? {};
+    // Extract data according to Cashfree webhook structure
+    const data = body?.data ?? body;
+    const order = data?.order ?? data;
+    const payment = data?.payment ?? {};
 
-    const cashfreeOrderId: string | undefined = order.cf_order_id || order.order_id;
-    const order_status: string | undefined = order.order_status;
-    const cashfreePaymentId: string | undefined = payment.cf_payment_id;
+    const cashfreeOrderId: string | undefined = 
+      order?.cf_order_id || 
+      order?.order_id || 
+      body?.order_id;
+    
+    const orderStatus: string | undefined = 
+      order?.order_status || 
+      body?.order_status;
+    
+    const cashfreePaymentId: string | undefined = 
+      payment?.cf_payment_id || 
+      payment?.payment_id || 
+      body?.payment_id;
+
+    console.log("Webhook data extracted:", {
+      cashfreeOrderId,
+      orderStatus,
+      cashfreePaymentId,
+      eventType: body?.type || "unknown",
+    });
 
     if (!cashfreeOrderId) {
+      console.error("Missing order ID in webhook:", body);
       return NextResponse.json(
         { success: false, error: "Missing order ID" },
         { status: 400 }
@@ -75,16 +104,28 @@ export async function POST(request: NextRequest) {
     let paymentStatus: "pending" | "success" | "failed" = "pending";
     let leadStatus: "registered" | "paid" = "registered";
 
-    if (order_status === "PAID" || order_status === "ACTIVE") {
-      paymentStatus = "success";
-      leadStatus = "paid";
-    } else if (
-      order_status === "FAILED" ||
-      order_status === "CANCELLED" ||
-      order_status === "EXPIRED"
-    ) {
-      paymentStatus = "failed";
+    // Map Cashfree order status to our status
+    switch (orderStatus?.toUpperCase()) {
+      case "PAID":
+      case "ACTIVE":
+        paymentStatus = "success";
+        leadStatus = "paid";
+        break;
+      case "FAILED":
+      case "CANCELLED":
+      case "EXPIRED":
+      case "TERMINATED":
+        paymentStatus = "failed";
+        break;
+      default:
+        paymentStatus = "pending";
     }
+
+    console.log("Status mapping:", {
+      cashfreeStatus: orderStatus,
+      mappedPaymentStatus: paymentStatus,
+      mappedLeadStatus: leadStatus,
+    });
 
     // Update payment status
     await db
@@ -97,7 +138,7 @@ export async function POST(request: NextRequest) {
       .where(eq(payments.id, dbPayment.id));
 
     // Update lead status if payment successful
-    if (paymentStatus === "success") {
+    if (paymentStatus === "success" && lead) {
       await db
         .update(leads)
         .set({
@@ -107,11 +148,11 @@ export async function POST(request: NextRequest) {
         .where(eq(leads.id, dbPayment.leadId));
 
       // Send payment confirmation email
-      if (lead && process.env.RESEND_API_KEY) {
+      if (process.env.RESEND_API_KEY) {
         try {
           await sendEmail({
             to: lead.email,
-            subject: "Payment Confirmed - AutomateFlow",
+            subject: "Payment Confirmed - AutomateFlow Workshop",
             html: emailTemplates.paymentConfirmation(
               lead.name,
               dbPayment.amount,
@@ -127,14 +168,27 @@ export async function POST(request: NextRequest) {
 
     console.log("Webhook processed successfully:", {
       orderId: cashfreeOrderId,
-      status: paymentStatus,
+      paymentStatus,
+      leadStatus,
       leadId: dbPayment.leadId,
     });
-    return NextResponse.json({ success: true });
+
+    return NextResponse.json({ 
+      success: true,
+      message: "Webhook processed successfully",
+      data: {
+        orderId: cashfreeOrderId,
+        status: paymentStatus,
+      }
+    });
   } catch (error) {
     console.error("Error processing webhook:", error);
     return NextResponse.json(
-      { success: false, error: "Webhook processing failed" },
+      { 
+        success: false, 
+        error: "Webhook processing failed",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }

@@ -6,7 +6,7 @@ import { gsap } from 'gsap'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import Confetti from 'react-confetti'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,6 +31,16 @@ export function RegistrationForm() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 })
   const formRef = useRef<HTMLDivElement>(null)
+
+  // Fetch dynamic workshop details
+  const { data: workshopData } = useQuery({
+    queryKey: ["workshop-details"],
+    queryFn: async () => {
+      const response = await fetch("/api/workshop/details");
+      if (!response.ok) throw new Error("Failed to fetch workshop details");
+      return response.json();
+    },
+  });
 
   useEffect(() => {
     const handleResize = () => {
@@ -84,7 +94,10 @@ export function RegistrationForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!response.ok) throw new Error('Failed to register')
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to register');
+      }
       return response.json()
     },
     onSuccess: (data) => {
@@ -105,6 +118,7 @@ export function RegistrationForm() {
 
       setTimeout(() => {
         if (data.paymentUrl) {
+          console.log("Redirecting to payment URL:", data.paymentUrl);
           window.location.href = data.paymentUrl
         }
       }, 2000)
@@ -114,18 +128,23 @@ export function RegistrationForm() {
         description: 'Redirecting to secure payment...',
       })
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Registration error:", error);
       toast({
         title: 'Registration Failed',
-        description: 'Please try again or contact support.',
+        description: error.message || 'Please try again or contact support.',
         variant: 'destructive',
       })
     },
   })
 
   const onSubmit = (data: RegistrationFormData) => {
+    console.log("Submitting registration:", data);
     submitRegistration.mutate(data)
   }
+
+  const workshop = workshopData?.data;
+  const pricing = workshop?.pricing;
 
   if (isSubmitted) {
     return (
@@ -187,7 +206,7 @@ export function RegistrationForm() {
               <div className="flex justify-center mb-4">
                 <Badge className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700 text-sm sm:text-base">
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Early Bird Special - 83% OFF
+                  Early Bird Special - {pricing?.discount || 83}% OFF
                 </Badge>
               </div>
               
@@ -207,8 +226,25 @@ export function RegistrationForm() {
                 </div>
                 <div className="flex items-center text-purple-600 dark:text-purple-400">
                   <Users className="w-4 h-4 mr-2" />
-                  <span>28 Seats Left</span>
+                  <span>{workshop?.availableSeats || 28} Seats Left</span>
                 </div>
+              </div>
+
+              {/* Live pricing display */}
+              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl">
+                <div className="flex items-center justify-center space-x-4">
+                  <span className="text-3xl sm:text-4xl font-bold text-green-600">
+                    ₹{pricing?.current?.toLocaleString() || "499"}
+                  </span>
+                  <span className="text-lg sm:text-xl text-gray-500 line-through">
+                    ₹{pricing?.original?.toLocaleString() || "2,999"}
+                  </span>
+                </div>
+                {pricing?.savings && (
+                  <p className="text-center text-green-600 font-semibold mt-2">
+                    Save ₹{pricing.savings.amount?.toLocaleString()} ({pricing.savings.percentage}% OFF)
+                  </p>
+                )}
               </div>
             </CardHeader>
             
@@ -290,7 +326,7 @@ export function RegistrationForm() {
                     ) : (
                       <>
                         <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 mr-3 group-hover:rotate-12 transition-transform" />
-                        Register & Pay ₹499
+                        Register & Pay ₹{pricing?.current?.toLocaleString() || "499"}
                       </>
                     )}
                   </Button>

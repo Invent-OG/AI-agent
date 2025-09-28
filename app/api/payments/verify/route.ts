@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log("Verifying payment for order:", orderId);
+
     // Find payment by order ID
     const [payment] = await db
       .select()
@@ -40,24 +42,64 @@ export async function GET(request: NextRequest) {
       const cashfree = getCashfreeClient();
       const orderStatus = await cashfree.getOrder(orderId);
       
+      console.log("Cashfree order status:", orderStatus);
+      
       // Update local payment status if different
-      if ((orderStatus.order_status === 'PAID' || orderStatus.order_status === 'ACTIVE') && payment.status !== 'success') {
+      let shouldUpdate = false;
+      let newStatus = payment.status;
+      let newLeadStatus = lead?.status;
+
+      switch (orderStatus.order_status?.toUpperCase()) {
+        case 'PAID':
+        case 'ACTIVE':
+          if (payment.status !== 'success') {
+            newStatus = 'success';
+            newLeadStatus = 'paid';
+            shouldUpdate = true;
+          }
+          break;
+        case 'FAILED':
+        case 'CANCELLED':
+        case 'EXPIRED':
+          if (payment.status !== 'failed') {
+            newStatus = 'failed';
+            shouldUpdate = true;
+          }
+          break;
+      }
+
+      if (shouldUpdate) {
+        console.log("Updating payment status:", { from: payment.status, to: newStatus });
+        
         await db
           .update(payments)
           .set({ 
-            status: 'success',
+            status: newStatus as any,
             updatedAt: new Date(),
           })
           .where(eq(payments.id, payment.id));
 
-        // Update lead status
-        await db
-          .update(leads)
-          .set({ 
-            status: 'paid',
-            updatedAt: new Date(),
-          })
-          .where(eq(leads.id, payment.leadId));
+        if (newLeadStatus && lead) {
+          await db
+            .update(leads)
+            .set({ 
+              status: newLeadStatus as any,
+              updatedAt: new Date(),
+            })
+            .where(eq(leads.id, payment.leadId));
+        }
+
+        // Return updated status
+        return NextResponse.json({
+          success: true,
+          payment: {
+            ...payment,
+            status: newStatus,
+            leadName: lead?.name,
+            leadEmail: lead?.email,
+          },
+          updated: true,
+        });
       }
     } catch (cashfreeError) {
       console.error('Error fetching order status from Cashfree:', cashfreeError);
@@ -71,6 +113,7 @@ export async function GET(request: NextRequest) {
         leadName: lead?.name,
         leadEmail: lead?.email,
       },
+      updated: false,
     });
   } catch (error) {
     console.error('Error verifying payment:', error);

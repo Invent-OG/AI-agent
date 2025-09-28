@@ -5,6 +5,7 @@ import { leads, payments } from "@/lib/db/schema";
 import { z } from "zod";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import { getCashfreeClient } from "@/lib/cashfree";
+import { getWorkshopPricing } from "@/lib/workshop-config";
 
 const registrationSchema = z.object({
   name: z.string().min(1),
@@ -18,22 +19,49 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = registrationSchema.parse(body);
 
-    // Create lead record
-    const [newLead] = await db
-      .insert(leads)
-      .values({
-        ...validatedData,
-        status: "registered",
-        source: "workshop",
-      })
-      .returning();
+    // Check if lead already exists
+    const existingLead = await db
+      .select()
+      .from(leads)
+      .where(eq(leads.email, validatedData.email))
+      .limit(1);
+
+    let leadRecord;
+    if (existingLead.length > 0) {
+      // Update existing lead
+      const [updatedLead] = await db
+        .update(leads)
+        .set({
+          ...validatedData,
+          status: "registered",
+          source: "workshop",
+          updatedAt: new Date(),
+        })
+        .where(eq(leads.id, existingLead[0].id))
+        .returning();
+      leadRecord = updatedLead;
+    } else {
+      // Create new lead
+      const [newLead] = await db
+        .insert(leads)
+        .values({
+          ...validatedData,
+          status: "registered",
+          source: "workshop",
+        })
+        .returning();
+      leadRecord = newLead;
+    }
+
+    // Get current workshop pricing
+    const pricing = getWorkshopPricing();
 
     // Create payment record
     const [payment] = await db
       .insert(payments)
       .values({
-        leadId: newLead.id,
-        amount: "499",
+        leadId: leadRecord.id,
+        amount: pricing.current.toString(),
         plan: "workshop",
         status: "pending",
       })
@@ -47,28 +75,40 @@ export async function POST(request: NextRequest) {
       const cashfree = getCashfreeClient();
 
       // Generate unique order ID
-      const orderId = `WS_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const orderId = `WS_${Date.now()}_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-      // Create Cashfree order
+      // Create Cashfree order with proper structure
       const orderData = {
         order_id: orderId,
-        order_amount: 499,
-        order_currency: "INR",
+        order_amount: pricing.current,
+        order_currency: pricing.currency,
         customer_details: {
-          customer_id: newLead.id,
-          customer_name: newLead.name,
-          customer_email: newLead.email,
-          customer_phone: newLead.phone || "9999999999",
+          customer_id: leadRecord.id,
+          customer_name: leadRecord.name,
+          customer_email: leadRecord.email,
+          customer_phone: leadRecord.phone || "9999999999",
         },
         order_meta: {
           return_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/payment/success?orderId=${orderId}`,
           notify_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payments/webhook`,
         },
+        order_note: "AutomateFlow Workshop Registration",
+        order_tags: {
+          plan: "workshop",
+          leadId: leadRecord.id,
+          source: "workshop_registration",
+        },
       };
+
+      console.log("Creating workshop payment order:", { orderId, amount: pricing.current });
 
       const cashfreeOrder = await cashfree.createOrder(orderData);
       cashfreeOrderId = cashfreeOrder.cf_order_id;
-      paymentUrl = `${process.env.CASHFREE_ENVIRONMENT === "production" ? "https://api.cashfree.com" : "https://sandbox.cashfree.com"}/pg/orders/${cashfreeOrderId}/pay`;
+      
+      // Use the correct payment URL format
+      paymentUrl = `${process.env.CASHFREE_ENVIRONMENT === "production" 
+        ? "https://payments.cashfree.com" 
+        : "https://payments-test.cashfree.com"}/pay/order/${cashfreeOrder.payment_session_id}`;
 
       // Update payment with Cashfree order ID
       await db
@@ -78,26 +118,38 @@ export async function POST(request: NextRequest) {
           updatedAt: new Date(),
         })
         .where(eq(payments.id, payment.id));
+
+      console.log("Workshop payment order created successfully:", {
+        orderId: cashfreeOrderId,
+        paymentUrl,
+        sessionId: cashfreeOrder.payment_session_id,
+      });
+
     } catch (cashfreeError) {
       console.error("Cashfree integration error:", cashfreeError);
 
       // Fallback to mock for development
       cashfreeOrderId = `mock_workshop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      paymentUrl = `https://sandbox.cashfree.com/pg/orders/${cashfreeOrderId}/pay`;
+      paymentUrl = `https://payments-test.cashfree.com/pay/order/${cashfreeOrderId}`;
 
       await db
         .update(payments)
-        .set({ cashfreeOrderId })
+        .set({ 
+          cashfreeOrderId,
+          updatedAt: new Date(),
+        })
         .where(eq(payments.id, payment.id));
+
+      console.log("Using mock payment for development:", { cashfreeOrderId, paymentUrl });
     }
 
     // Send welcome email
     if (process.env.RESEND_API_KEY) {
       try {
         await sendEmail({
-          to: newLead.email,
+          to: leadRecord.email,
           subject: "Workshop Registration Confirmed!",
-          html: emailTemplates.welcome(newLead.name),
+          html: emailTemplates.welcome(leadRecord.name),
         });
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError);
@@ -107,12 +159,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      lead: newLead,
+      lead: leadRecord,
       payment: {
         ...payment,
         cashfreeOrderId,
       },
       paymentUrl,
+      pricing,
     });
   } catch (error) {
     console.error("Error registering for workshop:", error);

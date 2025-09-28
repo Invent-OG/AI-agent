@@ -4,10 +4,11 @@ import { payments, leads } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getCashfreeClient } from "@/lib/cashfree";
+import { getWorkshopPricing } from "@/lib/workshop-config";
 
 const paymentSchema = z.object({
   leadId: z.string().uuid(),
-  plan: z.enum(["starter", "pro", "business"]),
+  plan: z.enum(["starter", "pro", "business", "workshop"]),
   hasUpsell: z.boolean().default(false),
 });
 
@@ -15,6 +16,7 @@ const planPrices = {
   starter: 2499,
   pro: 4999,
   business: 9999,
+  workshop: getWorkshopPricing().current, // Use dynamic pricing
 };
 
 export async function POST(request: NextRequest) {
@@ -32,8 +34,8 @@ export async function POST(request: NextRequest) {
     }
 
     let amount = planPrices[plan];
-    if (hasUpsell) {
-      amount += 999; // Add upsell amount
+    if (hasUpsell && plan !== "workshop") {
+      amount += 999; // Add upsell amount for non-workshop plans
     }
 
     // Create payment record
@@ -52,10 +54,10 @@ export async function POST(request: NextRequest) {
       // Initialize Cashfree client
       const cashfree = getCashfreeClient();
 
-      // Generate unique order ID
-      const orderId = `AF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Generate unique order ID following Cashfree guidelines
+      const orderId = `AF_${Date.now()}_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-      // Create Cashfree order
+      // Prepare order data according to Cashfree API v2023-08-01
       const orderData = {
         order_id: orderId,
         order_amount: amount,
@@ -64,13 +66,21 @@ export async function POST(request: NextRequest) {
           customer_id: lead.id,
           customer_name: lead.name,
           customer_email: lead.email,
-          customer_phone: lead.phone || "9999999999",
+          customer_phone: lead.phone || "9999999999", // Fallback phone number
         },
         order_meta: {
           return_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/payment/success?orderId=${orderId}`,
           notify_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payments/webhook`,
         },
+        order_note: `Payment for ${plan} plan - AutomateFlow`,
+        order_tags: {
+          plan: plan,
+          leadId: leadId,
+          hasUpsell: hasUpsell.toString(),
+        },
       };
+
+      console.log("Creating Cashfree order:", { orderId, amount, plan });
 
       const cashfreeOrder = await cashfree.createOrder(orderData);
 
@@ -83,8 +93,10 @@ export async function POST(request: NextRequest) {
         })
         .where(eq(payments.id, payment.id));
 
-      // Generate payment URL
-      const paymentUrl = `${process.env.CASHFREE_ENVIRONMENT === 'production' ? 'https://api.cashfree.com' : 'https://sandbox.cashfree.com'}/pg/orders/${cashfreeOrder.cf_order_id}/pay`;
+      // Generate payment URL using the correct Cashfree format
+      const paymentUrl = `${this.config.environment === 'production' 
+        ? 'https://payments.cashfree.com' 
+        : 'https://payments-test.cashfree.com'}/pay/order/${cashfreeOrder.payment_session_id}`;
 
       return NextResponse.json({
         success: true,
@@ -102,12 +114,15 @@ export async function POST(request: NextRequest) {
     } catch (cashfreeError) {
       console.error("Cashfree integration error:", cashfreeError);
 
-      // Fallback to mock for development
+      // Enhanced fallback for development with better error handling
       const mockOrderId = `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       await db
         .update(payments)
-        .set({ cashfreeOrderId: mockOrderId })
+        .set({ 
+          cashfreeOrderId: mockOrderId,
+          updatedAt: new Date(),
+        })
         .where(eq(payments.id, payment.id));
 
       return NextResponse.json({
@@ -118,10 +133,12 @@ export async function POST(request: NextRequest) {
         },
         cashfree: {
           orderId: mockOrderId,
-          paymentUrl: `https://sandbox.cashfree.com/pg/orders/${mockOrderId}/pay`,
+          paymentUrl: `https://payments-test.cashfree.com/pay/order/${mockOrderId}`,
           orderStatus: "ACTIVE",
+          paymentSessionId: mockOrderId,
         },
-        warning: "Using mock payment for development",
+        warning: "Using mock payment for development - Cashfree credentials not configured",
+        error: cashfreeError instanceof Error ? cashfreeError.message : "Unknown error",
       });
     }
   } catch (error) {
