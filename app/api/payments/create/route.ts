@@ -19,7 +19,7 @@ const planPrices = {
   workshop: getWorkshopPricing().current, // Use dynamic pricing
 };
 
-export async function POST(request: NextRequest) {
+export async function POST(this: any, request: NextRequest) {
   try {
     const body = await request.json();
     const { leadId, plan, hasUpsell } = paymentSchema.parse(body);
@@ -94,9 +94,11 @@ export async function POST(request: NextRequest) {
         .where(eq(payments.id, payment.id));
 
       // Generate payment URL using the correct Cashfree format
-      const paymentUrl = `${this.config.environment === 'production' 
-        ? 'https://payments.cashfree.com' 
-        : 'https://payments-test.cashfree.com'}/pay/order/${cashfreeOrder.payment_session_id}`;
+      const paymentUrl = `${
+        this.config.environment === "production"
+          ? "https://payments.cashfree.com"
+          : "https://payments-test.cashfree.com"
+      }/pay/order/${cashfreeOrder.payment_session_id}`;
 
       return NextResponse.json({
         success: true,
@@ -119,7 +121,7 @@ export async function POST(request: NextRequest) {
 
       await db
         .update(payments)
-        .set({ 
+        .set({
           cashfreeOrderId: mockOrderId,
           updatedAt: new Date(),
         })
@@ -137,8 +139,12 @@ export async function POST(request: NextRequest) {
           orderStatus: "ACTIVE",
           paymentSessionId: mockOrderId,
         },
-        warning: "Using mock payment for development - Cashfree credentials not configured",
-        error: cashfreeError instanceof Error ? cashfreeError.message : "Unknown error",
+        warning:
+          "Using mock payment for development - Cashfree credentials not configured",
+        error:
+          cashfreeError instanceof Error
+            ? cashfreeError.message
+            : "Unknown error",
       });
     }
   } catch (error) {
